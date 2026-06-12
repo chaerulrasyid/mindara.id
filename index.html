@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindara — Dari satu ide, ribuan kemungkinan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     DASHBOARD
+══════════════════════════════════════════════ -->
+<div id="dashboard">
+  <!-- Navbar -->
+  <div class="dash-nav">
+    <div class="dash-logo">Mindar<span class="dot">a</span></div>
+    <span class="dash-map-badge" id="dash-counter">0/3 Maps</span>
+    <div class="dash-nav-spacer"></div>
+    <div class="dash-user">👤</div>
+  </div>
+  <!-- Upgrade Banner (tampil saat limit tercapai) -->
+  <div class="dash-banner" id="dash-banner">
+    <span class="dash-banner-icon">⚠️</span>
+    <span class="dash-banner-text"><strong>Batas canvas gratis tercapai.</strong> Upgrade ke Pro untuk canvas tanpa batas.</span>
+    <button class="dash-banner-cta" onclick="showUpgradeModal()">Upgrade Sekarang →</button>
+  </div>
+  <!-- Body -->
+  <div class="dash-body">
+    <div class="dash-home-label">Home</div>
+    <!-- Quick Actions -->
+    <div class="dash-quick">
+      <button class="dash-qa" onclick="openNameModal()">
+        <span>＋</span> Canvas Baru
+      </button>
+      <button class="dash-qa disabled" title="Segera hadir">
+        <span>📄</span> PDF to Mindmap <span class="qa-soon">Soon</span>
+      </button>
+      <button class="dash-qa disabled" title="Segera hadir">
+        <span>▶️</span> YouTube to Mindmap <span class="qa-soon">Soon</span>
+      </button>
+      <button class="dash-qa disabled" title="Segera hadir">
+        <span>🖼️</span> Image to Mindmap <span class="qa-soon">Soon</span>
+      </button>
+    </div>
+    <!-- Canvas Grid -->
+    <div class="dash-grid" id="dash-grid"></div>
+  </div>
+</div>
+
+<!-- Name Modal -->
+<div id="name-modal" class="dash-overlay" style="display:none;">
+  <div class="dash-mbox">
+    <div class="dash-mtitle">Beri nama canvas baru</div>
+    <input type="text" id="name-input" placeholder="contoh: Strategi Pemasaran Q3..." maxlength="60" />
+    <div class="dash-mactions">
+      <button class="btn btn-ghost" onclick="closeNameModal()">Batal</button>
+      <button class="btn btn-primary" onclick="confirmCreateCanvas()">Buat Canvas →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upgrade Modal -->
+<div id="upgrade-modal" class="dash-overlay" style="display:none;">
+  <div class="dash-mbox">
+    <div class="upgrade-icon">✦</div>
+    <div class="dash-mtitle">Batas canvas gratis tercapai</div>
+    <p class="dash-mdesc">Kamu sudah menggunakan 3 canvas gratis. Upgrade ke Mindara Pro untuk canvas tanpa batas.</p>
+    <div class="upgrade-features">
+      <div class="uf-item">→ Canvas tidak terbatas</div>
+      <div class="uf-item">→ Export ke PNG &amp; PDF</div>
+      <div class="uf-item">→ Sharing via link publik</div>
+      <div class="uf-item">→ Kolaborasi tim (segera)</div>
+    </div>
+    <a href="https://forms.gle/EF9WQKcZHfSrvgst5" target="_blank" class="btn btn-accent" style="text-decoration:none;display:block;text-align:center;margin-top:20px;padding:12px 0;border-radius:8px;font-weight:700;font-size:14px;">
+      Daftar Early Access Pro →
+    </a>
+    <button class="btn btn-ghost" onclick="closeUpgradeModal()" style="width:100%;margin-top:8px;">Nanti saja</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     WELCOME SCREEN
+══════════════════════════════════════════════ -->
+<div id="welcome" style="display:none;">
+  <div class="welcome-logo">Mindar<span class="dot">a</span></div>
+  <div class="welcome-tagline">Dari satu ide, ribuan kemungkinan.</div>
+
+  <div class="welcome-card">
+    <h2>Buat peta tentang apa hari ini?</h2>
+    <p>Ketik topik Anda — Mindara akan generate struktur peta secara otomatis.</p>
+
+    <div class="welcome-input-wrap">
+      <input type="text" id="welcome-input"
+        placeholder="contoh: strategi pemasaran digital..."
+        autocomplete="off" />
+      <button class="btn-generate" onclick="startGenerate()">
+        ✦ Buat Peta
+      </button>
+    </div>
+
+    <div class="example-label">Coba contoh topik</div>
+    <div class="example-chips">
+      <span class="example-chip" onclick="setExample('Skripsi S1')">Skripsi S1</span>
+      <span class="example-chip" onclick="setExample('Rencana Bisnis Startup')">Rencana Bisnis</span>
+      <span class="example-chip" onclick="setExample('Agentic AI')">Agentic AI</span>
+      <span class="example-chip" onclick="setExample('Manajemen Proyek')">Manajemen Proyek</span>
+      <span class="example-chip" onclick="setExample('Belajar Data Science')">Data Science</span>
+      <span class="example-chip" onclick="setExample('Strategi Karir')">Strategi Karir</span>
+    </div>
+
+    <div class="welcome-divider">atau</div>
+    <button class="btn-blank" onclick="startBlank()">Mulai dari canvas kosong</button>
+  </div>
+</div>
+
+<!-- Generating overlay -->
+<div id="gen-overlay">
+  <div class="gen-logo">Mindar<span class="dot">a</span></div>
+  <div class="gen-topic" id="gen-topic-label">Membuat peta...</div>
+  <div class="gen-progress"><div class="gen-bar"></div></div>
+  <div class="gen-status" id="gen-status">Menganalisis topik...</div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TOOLBAR
+══════════════════════════════════════════════ -->
+<div id="toolbar" style="display:none;"></div>
+
+<!-- ── FLOATING PILL ── -->
+<div id="floating-bar">
+  <button class="fb-back" onclick="showDashboard()" title="Dashboard">←</button>
+  <div class="fb-logo">Mindar<span class="dot">a</span></div>
+  <div class="fb-sep"></div>
+  <span class="fb-name" id="toolbar-canvas-name">Canvas</span>
+  <div class="fb-sep"></div>
+  <button class="fb-btn" onclick="saveMap()" title="Simpan">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+  </button>
+  <button class="fb-btn" onclick="layoutAll();render();toast('Peta dirapikan')" title="Rapikan layout">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+  </button>
+  <button class="fb-btn" onclick="exportMap()" title="Export">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+  </button>
+  <div class="fb-sep"></div>
+  <button class="fb-btn" onclick="openApiModal()" title="Pengaturan AI" style="gap:5px;width:auto;padding:0 8px;">
+    AI <span class="api-badge demo" id="api-badge" style="font-size:9px;">Demo</span>
+  </button>
+  <button class="fb-ai" onclick="togglePanel()">✦ Asisten AI</button>
+</div>
+
+<!-- ── LEFT SIDEBAR ── -->
+<div id="left-sidebar">
+  <!-- Select -->
+  <button class="ls-btn active" id="ls-select" onclick="setEditorTool('select')" data-tip="Pilih">
+    <svg viewBox="0 0 24 24"><path d="M4 3l16 9-9 1.5L8 22z" stroke-width="1.8"/></svg>
+  </button>
+  <!-- Pan -->
+  <button class="ls-btn" id="ls-pan" onclick="setEditorTool('pan')" data-tip="Geser">
+    <svg viewBox="0 0 24 24"><path d="M14 5V3a1 1 0 00-2 0v2M14 5v6M14 5h-2M12 5V3a1 1 0 00-2 0v8M10 11V6a1 1 0 00-2 0v6l-1.5-1.5a1 1 0 00-1.4 1.4l2.4 2.4A5 5 0 009 18v1h6v-1a5 5 0 00-1-3V9a1 1 0 00-2 0v2"/></svg>
+  </button>
+
+  <div class="ls-sep"></div>
+
+  <!-- Add Node -->
+  <button class="ls-btn" onclick="addChild()" data-tip="Tambah Node">
+    <svg viewBox="0 0 24 24"><rect x="3" y="10" width="8" height="5" rx="1.5"/><rect x="13" y="4" width="8" height="5" rx="1.5"/><rect x="13" y="15" width="8" height="5" rx="1.5"/><path d="M7 12.5v-4M7 8.5c0-1.5 1-2.5 3-2.5h3M7 12.5c0 1.5 1 2.5 3 2.5h3"/></svg>
+  </button>
+  <!-- Delete -->
+  <button class="ls-btn" id="btn-del-side" onclick="deleteSelected()" data-tip="Hapus Node">
+    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4h6v2"/></svg>
+  </button>
+
+  <div class="ls-sep"></div>
+
+  <!-- Gallery (soon) -->
+  <button class="ls-btn disabled" data-tip="Galeri (Segera)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+  </button>
+  <!-- Present (soon) -->
+  <button class="ls-btn disabled" data-tip="Presentasi (Segera)">
+    <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+  </button>
+  <!-- Note (soon) -->
+  <button class="ls-btn disabled" data-tip="Catatan (Segera)">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+  </button>
+
+  <div class="ls-sep"></div>
+
+  <!-- Background color (soon) -->
+  <button class="ls-btn disabled" data-tip="Warna Latar (Segera)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 000 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.3-.4-.6-.4-1 0-1.1.9-2 2-2h2.4A5.5 5.5 0 0022 12 10 10 0 0012 2z"/><circle cx="7" cy="10" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14" cy="7" r="1"/><circle cx="17" cy="10" r="1"/></svg>
+  </button>
+  <!-- Dots/Grid toggle -->
+  <button class="ls-btn active" onclick="toggleGrid()" id="ls-grid" data-tip="Grid">
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="19" cy="5" r="1" fill="currentColor"/><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/><circle cx="5" cy="19" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/><circle cx="19" cy="19" r="1" fill="currentColor"/></svg>
+  </button>
+
+  <div class="ls-sep"></div>
+
+  <!-- AI -->
+  <button class="ls-btn ls-ai" onclick="togglePanel()" data-tip="Asisten AI">
+    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor" stroke="none"/></svg>
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════════ -->
+<div id="main" style="display:none;">
+
+  <!-- Canvas -->
+  <div id="canvas-wrap">
+    <svg id="canvas">
+      <defs></defs>
+      <g id="vp">
+        <g id="edge-layer"></g>
+        <g id="node-layer"></g>
+      </g>
+    </svg>
+    <div id="empty-hint">
+      <div class="hint-text">Canvas kosong — klik ✦ Asisten AI untuk generate peta baru</div>
+    </div>
+    <div id="zoom-hud">
+      <span>↔</span>
+      <span class="zoom-val" id="zoom-val">100%</span>
+      <span style="color:var(--border)">│</span>
+      <span id="node-count">0 node</span>
+    </div>
+    <div id="shortcuts">
+      <kbd>Double-click</kbd> Edit &nbsp; <kbd>Tab</kbd> Cabang baru<br>
+      <kbd>Del</kbd> Hapus &nbsp; <kbd>Scroll</kbd> Zoom<br>
+      <kbd>Drag bg</kbd> Geser &nbsp; <kbd>Klik kanan</kbd> Menu
+    </div>
+  </div>
+
+  <!-- AI Panel -->
+  <div id="ai-panel" class="hidden">
+    <div class="panel-head">
+      <div class="ai-icon">✦</div>
+      <h3>Asisten AI</h3>
+      <button class="btn btn-ghost" style="padding:4px 7px;font-size:13px;" onclick="togglePanel()">✕</button>
+    </div>
+
+    <!-- Generate from panel -->
+    <div id="panel-generate">
+      <div class="panel-gen-label">Generate Peta Baru</div>
+      <div class="panel-gen-wrap">
+        <input type="text" id="panel-gen-input" placeholder="Topik baru..." />
+        <button class="btn btn-primary" style="padding:7px 12px;" onclick="panelGenerate()">✦</button>
+      </div>
+    </div>
+
+    <div id="sel-info">
+      <div class="sel-label">Node Terpilih</div>
+      <div id="sel-text" style="color:var(--text-faint);font-size:13px;font-style:italic;">— Klik node di peta —</div>
+    </div>
+
+    <div id="ai-body">
+      <div class="section-title">Saran Cabang</div>
+      <div id="chips">
+        <span style="color:var(--text-faint);font-size:12.5px;font-style:italic;">Pilih node untuk saran AI</span>
+      </div>
+      <div style="margin-top:20px;">
+        <div class="section-title">Konteks &amp; Relasi</div>
+        <div id="ai-relate" class="ai-box" style="display:none;"></div>
+      </div>
+      <div style="margin-top:20px;">
+        <div class="section-title">Respons AI</div>
+        <div id="ai-resp" class="ai-box" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="ai-input-wrap">
+      <textarea id="ai-q" rows="2" placeholder="Tanya AI tentang node ini..."></textarea>
+      <button class="btn btn-primary" onclick="askAI()" style="align-self:flex-end;padding:8px 11px;">↵</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx">
+  <div class="ctx-item" onclick="ctx_addChild()">＋ Tambah Cabang</div>
+  <div class="ctx-item" onclick="ctx_edit()">✎ Edit Teks</div>
+  <div class="ctx-item" onclick="ctx_color()">◉ Ganti Warna</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctx_expand()">✦ Kembangkan dengan AI</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="ctx_delete()">✕ Hapus Node</div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <h3 id="edit-title">Edit Node</h3>
+    <input type="text" class="modal-input" id="edit-inp" placeholder="Teks node..." />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEdit()">Batal</button>
+      <button class="btn btn-primary" onclick="confirmEdit()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- API MODAL -->
+<div class="modal-overlay" id="api-modal">
+  <div class="modal-box">
+    <h3>Konfigurasi AI</h3>
+    <p>Masukkan API key untuk mengaktifkan AI sungguhan. Tanpa key, mode demo tetap berjalan.</p>
+    <label>Provider AI</label>
+    <select class="modal-select" id="prov-sel">
+      <option value="demo">Mode Demo (tanpa API key)</option>
+      <option value="openai">OpenAI — GPT-4o mini</option>
+      <option value="claude">Anthropic — Claude Haiku</option>
+    </select>
+    <label>API Key</label>
+    <input type="password" class="modal-input" id="key-inp" placeholder="sk-..." />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeApiModal()">Batal</button>
+      <button class="btn btn-primary" onclick="saveApiKey()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- COLOR MODAL -->
+<div class="modal-overlay" id="color-modal">
+  <div class="modal-box" style="width:360px;">
+    <h3>Pilih Warna Node</h3>
+    <div id="color-grid" style="display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeColorModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

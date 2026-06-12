@@ -197,7 +197,7 @@
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 000 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.3-.4-.6-.4-1 0-1.1.9-2 2-2h2.4A5.5 5.5 0 0022 12 10 10 0 0012 2z"/><circle cx="7" cy="10" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14" cy="7" r="1"/><circle cx="17" cy="10" r="1"/></svg>
   </button>
   <!-- Dots/Grid toggle -->
-  <button class="ls-btn active" onclick="toggleGrid()" id="ls-grid" data-tip="Grid">
+  <button class="ls-btn active" onclick="toggleGridPanel(event)" id="ls-grid" data-tip="Grid">
     <svg viewBox="0 0 24 24"><circle cx="5" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="19" cy="5" r="1" fill="currentColor"/><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/><circle cx="5" cy="19" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/><circle cx="19" cy="19" r="1" fill="currentColor"/></svg>
   </button>
 
@@ -207,6 +207,38 @@
   <button class="ls-btn ls-ai" onclick="togglePanel()" data-tip="Asisten AI">
     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor" stroke="none"/></svg>
   </button>
+</div>
+
+<!-- GRID SETTINGS POPOVER -->
+<div id="grid-popover" class="grid-popover">
+  <div class="gp-label">Grid Style</div>
+  <button class="gp-style-opt" data-gstyle="dots" onclick="setGridStyle('dots')">
+    <span class="gp-style-icon gp-style-dots"></span> Dots
+  </button>
+  <button class="gp-style-opt" data-gstyle="lines" onclick="setGridStyle('lines')">
+    <span class="gp-style-icon gp-style-lines"></span> Lines
+  </button>
+  <button class="gp-style-opt" data-gstyle="none" onclick="setGridStyle('none')">
+    <span class="gp-style-icon gp-style-none"></span> None
+  </button>
+
+  <div class="gp-sep"></div>
+
+  <div class="gp-label">Ukuran Grid</div>
+  <div class="gp-row">
+    <button class="gp-chip" data-gsize="s" onclick="setGridSize('s')">S</button>
+    <button class="gp-chip" data-gsize="m" onclick="setGridSize('m')">M</button>
+    <button class="gp-chip" data-gsize="l" onclick="setGridSize('l')">L</button>
+  </div>
+
+  <div class="gp-sep"></div>
+
+  <div class="gp-label">Opacity</div>
+  <div class="gp-row">
+    <button class="gp-chip" data-gopacity="light" onclick="setGridOpacity('light')">Light</button>
+    <button class="gp-chip" data-gopacity="med" onclick="setGridOpacity('med')">Med</button>
+    <button class="gp-chip" data-gopacity="strong" onclick="setGridOpacity('strong')">Strong</button>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════

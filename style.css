@@ -351,6 +351,60 @@ body {
 .ls-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .ls-sep { width: 36px; height: 1px; background: var(--border); margin: 2px 0; flex-shrink: 0; }
 
+/* ── GRID SETTINGS POPOVER ── */
+.grid-popover {
+  position: fixed;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  width: 168px;
+  z-index: 90;
+  box-shadow: 0 4px 20px rgba(0,59,53,0.12);
+  display: none;
+}
+.grid-popover.open { display: block; }
+
+.gp-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+  text-transform: uppercase; color: var(--text-faint);
+  font-family: var(--font-head); margin-bottom: 8px;
+}
+.gp-sep { height: 1.5px; background: var(--border-soft); margin: 12px 0; }
+
+.gp-style-opt {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 7px 8px; margin-bottom: 4px;
+  border: 1.5px solid transparent; border-radius: 7px;
+  background: transparent; cursor: pointer;
+  font-size: 12.5px; font-weight: 500; font-family: var(--font-body);
+  color: var(--text); transition: all 0.12s;
+}
+.gp-style-opt:last-child { margin-bottom: 0; }
+.gp-style-opt:hover { background: var(--surface); }
+.gp-style-opt.active { background: var(--surface); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+
+.gp-style-icon {
+  width: 22px; height: 16px; flex-shrink: 0;
+  background-color: var(--surface);
+  background-repeat: repeat; border-radius: 3px;
+  border: 1px solid var(--border-soft);
+}
+.gp-style-dots  { background-image: radial-gradient(circle, var(--text-muted) 1px, transparent 1px); background-size: 6px 6px; }
+.gp-style-lines { background-image: linear-gradient(to right, var(--text-muted) 1px, transparent 1px), linear-gradient(to bottom, var(--text-muted) 1px, transparent 1px); background-size: 6px 6px; }
+.gp-style-none  { background-image: none; }
+
+.gp-row { display: flex; gap: 6px; }
+.gp-chip {
+  flex: 1; padding: 6px 0; text-align: center;
+  border: 1.5px solid var(--border); border-radius: 6px;
+  background: transparent; cursor: pointer;
+  font-size: 12px; font-weight: 600; font-family: var(--font-head);
+  color: var(--text-muted); transition: all 0.12s;
+}
+.gp-chip:hover { background: var(--surface); color: var(--text); }
+.gp-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
 /* AI button accent */
 .ls-btn.ls-ai { background: var(--accent); color: var(--text); }
 .ls-btn.ls-ai:hover { background: var(--accent-hover); color: #fff; }
@@ -418,6 +472,8 @@ body {
   overflow: hidden;
   background: var(--bg);
   cursor: grab;
+  --grid-size: 28px;
+  --grid-opacity: 0.1;
 }
 #canvas-wrap.panning { cursor: grabbing; }
 #canvas { width: 100%; height: 100%; }
@@ -425,9 +481,17 @@ body {
 #canvas-wrap::before {
   content: '';
   position: absolute; inset: 0;
-  background-image: radial-gradient(circle, rgba(0,59,53,0.1) 1.2px, transparent 1.2px);
-  background-size: 28px 28px;
+  background-image: radial-gradient(circle, rgb(0 59 53 / var(--grid-opacity)) 1.2px, transparent 1.2px);
+  background-size: var(--grid-size) var(--grid-size);
   pointer-events: none;
+}
+#canvas-wrap[data-grid-style="lines"]::before {
+  background-image:
+    linear-gradient(to right,  rgb(0 59 53 / var(--grid-opacity)) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 59 53 / var(--grid-opacity)) 1px, transparent 1px);
+}
+#canvas-wrap[data-grid-style="none"]::before {
+  background-image: none;
 }
 
 /* Empty canvas hint */

@@ -351,14 +351,54 @@ function _enterEditor(name, showWelcome) {
   }
 }
 
-function toggleGrid() {
+// ═══════════════════════════════════════════════
+//  GRID SETTINGS
+// ═══════════════════════════════════════════════
+const GRID_SIZES     = { s: 16, m: 28, l: 44 };
+const GRID_OPACITIES = { light: 0.05, med: 0.1, strong: 0.18 };
+
+let gridStyle   = localStorage.getItem('mi_grid_style')   || 'dots';
+let gridSize    = localStorage.getItem('mi_grid_size')    || 'm';
+let gridOpacity = localStorage.getItem('mi_grid_opacity') || 'med';
+
+function applyGridSettings() {
   const wrap = document.getElementById('canvas-wrap');
-  const btn  = document.getElementById('ls-grid');
-  const on   = wrap.dataset.grid !== 'off';
-  wrap.dataset.grid = on ? 'off' : 'on';
-  wrap.style.backgroundImage = on ? 'none' : '';
-  btn.classList.toggle('active', !on);
+  wrap.dataset.gridStyle = gridStyle;
+  wrap.style.setProperty('--grid-size', GRID_SIZES[gridSize] + 'px');
+  wrap.style.setProperty('--grid-opacity', GRID_OPACITIES[gridOpacity]);
+
+  document.getElementById('ls-grid').classList.toggle('active', gridStyle !== 'none');
+  document.querySelectorAll('.gp-style-opt').forEach(b => b.classList.toggle('active', b.dataset.gstyle === gridStyle));
+  document.querySelectorAll('[data-gsize]').forEach(b => b.classList.toggle('active', b.dataset.gsize === gridSize));
+  document.querySelectorAll('[data-gopacity]').forEach(b => b.classList.toggle('active', b.dataset.gopacity === gridOpacity));
 }
+
+function setGridStyle(v)   { gridStyle = v;   localStorage.setItem('mi_grid_style', v);   applyGridSettings(); }
+function setGridSize(v)    { gridSize = v;    localStorage.setItem('mi_grid_size', v);    applyGridSettings(); }
+function setGridOpacity(v) { gridOpacity = v; localStorage.setItem('mi_grid_opacity', v); applyGridSettings(); }
+
+function toggleGridPanel(e) {
+  e.stopPropagation();
+  const pop = document.getElementById('grid-popover');
+  if (pop.classList.contains('open')) { closeGridPanel(); return; }
+  const r = document.getElementById('ls-grid').getBoundingClientRect();
+  pop.style.left = (r.right + 10) + 'px';
+  pop.style.top  = r.top + 'px';
+  pop.classList.add('open');
+  const ph = pop.getBoundingClientRect().height;
+  if (r.top + ph > window.innerHeight - 10) {
+    pop.style.top = Math.max(10, window.innerHeight - ph - 10) + 'px';
+  }
+}
+function closeGridPanel() {
+  document.getElementById('grid-popover').classList.remove('open');
+}
+document.addEventListener('click', e => {
+  const pop = document.getElementById('grid-popover');
+  if (pop.classList.contains('open') && !pop.contains(e.target) && !document.getElementById('ls-grid').contains(e.target)) {
+    closeGridPanel();
+  }
+});
 
 function setEditorTool(tool) {
   // Visual active state
@@ -933,7 +973,7 @@ function closeColorModal(){document.getElementById('color-modal').classList.remo
 // ═══════════════════════════════════════════════
 document.addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
-  if(e.key==='Escape')                       {hideCtx();closeEdit();closeApiModal();closeColorModal();}
+  if(e.key==='Escape')                       {hideCtx();closeEdit();closeApiModal();closeColorModal();closeGridPanel();}
   if(e.key==='Delete'||e.key==='Backspace')  deleteSelected();
   if(e.key==='Tab')  {e.preventDefault();addChild();}
   if(e.key==='F2')   {if(sel) openEdit(sel);}
@@ -1162,6 +1202,7 @@ window.addEventListener('load',()=>{
     b.textContent=aiProv==='openai'?'OpenAI':'Claude';
     b.className='api-badge set';
   }
+  applyGridSettings();
   updateVP();
   // Mulai dari dashboard
   showDashboard();

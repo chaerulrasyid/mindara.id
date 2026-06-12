@@ -591,7 +591,7 @@ Jawab HANYA dengan JSON valid tanpa markdown, format:
 {"root":"${topic}","branches":[{"label":"Cabang Utama","children":["anak1","anak2","anak3"]}]}
 Buat 4-5 cabang utama, setiap cabang 3-4 anak. Singkat dan padat.`;
 
-  const result = await callAI(prompt);
+  const result = await callAI([{role:'user',content:prompt}]);
 
   // Extract JSON from response
   const jsonMatch = result.match(/\{[\s\S]*\}/);
@@ -905,6 +905,7 @@ function selectNode(id){
     ?'font-size:13.5px;font-weight:600;color:var(--text);font-style:normal;'
     :'font-size:13px;color:var(--text-faint);font-style:italic;';
   if(n) generateSuggestions(n); // node.id tersedia di dalam n
+  renderChat(id);
   render();
 }
 
@@ -914,6 +915,7 @@ function deselect(){
   document.getElementById('sel-text').textContent='— Klik node di peta —';
   document.getElementById('sel-text').style.cssText='font-size:13px;color:var(--text-faint);font-style:italic;';
   document.getElementById('chips').innerHTML='<span style="color:var(--text-faint);font-size:12.5px;font-style:italic;">Pilih node untuk saran AI</span>';
+  renderChat(null);
   render();
 }
 
@@ -1187,7 +1189,7 @@ async function generateSuggestions(node){
         `Buat 7 sub-topik yang SPESIFIK dan RELEVAN untuk node ini. ` +
         `Pertimbangkan konteks hierarki — jangan saran yang terlalu generik. ` +
         `Jawab hanya nama topik, satu per baris, maks 3 kata.`;
-      const res   = await callAI(prompt);
+      const res   = await callAI([{role:'user',content:prompt}]);
       const items = res.split('\n').map(s => s.replace(/^[-•\d.]\s*/,'').trim()).filter(Boolean).slice(0,8);
       cont.innerHTML = items.map(chip).join('');
     } catch { cont.innerHTML = demoChips(ctx); }
@@ -1223,22 +1225,63 @@ function addChip(text){
   autoPlace(nid); render(); selectNode(nid);
 }
 
+// ── Render histori chat untuk node yang dipilih ─────────────────────────────
+function renderChat(id){
+  const cont=document.getElementById('ai-chat');
+  const chat=id ? (nodes[id]?.chat || []) : [];
+  if(!chat.length){
+    cont.innerHTML='<div class="chat-empty">Pilih node, lalu tanya AI untuk explore atau mendeskripsikan node tersebut.</div>';
+    return;
+  }
+  cont.innerHTML='';
+  chat.forEach(m=>{
+    const div=document.createElement('div');
+    div.className='chat-msg '+(m.role==='user'?'user':'ai');
+    div.textContent=m.content;
+    cont.appendChild(div);
+  });
+  cont.scrollTop=cont.scrollHeight;
+}
+
 async function askAI(){
   const q=document.getElementById('ai-q').value.trim();
-  if(!q) return;
-  const resp=document.getElementById('ai-resp');
-  resp.style.display='block';
-  resp.innerHTML='<span class="spin"></span> Memproses...';
-  const ctx=nodes[sel]?.text||'topik ini';
-  const prompt=`Mind map node: "${ctx}". Pertanyaan: ${q}. Jawab bahasa Indonesia, maks 3 kalimat.`;
-  if(!apiKey||aiProv==='demo'){
-    await sleep(800);
-    resp.innerHTML=`<strong>${ctx}</strong>: Ini adalah area yang mencakup beberapa dimensi penting — definisi yang jelas, konteks penerapan di Indonesia, dan langkah implementasi yang terukur.`;
-  }else{
-    try{resp.innerHTML=await callAI(prompt);}
-    catch(e){resp.innerHTML=`<span style="color:var(--danger)">Error: ${e.message}</span>`;}
-  }
+  if(!q||!sel) return;
+  const n=nodes[sel];
+  if(!n.chat) n.chat=[];
+  n.chat.push({role:'user',content:q});
   document.getElementById('ai-q').value='';
+  renderChat(sel);
+
+  const cont=document.getElementById('ai-chat');
+  const thinking=document.createElement('div');
+  thinking.className='chat-msg thinking';
+  thinking.innerHTML='<span class="spin"></span> Memproses...';
+  cont.appendChild(thinking);
+  cont.scrollTop=cont.scrollHeight;
+
+  const ctx=getNodeContext(sel);
+  const system=`Kamu asisten mind map yang membantu menjelaskan dan mengeksplorasi sebuah node dalam peta pikiran.\n`+
+    `Topik utama peta: "${ctx.root}"\n`+
+    `Hierarki node: ${ctx.path.join(' → ')}\n`+
+    `Node yang sedang dibahas: "${ctx.current}" (level ${ctx.depth})\n`+
+    `Jawab dalam bahasa Indonesia, ringkas (maks 4 kalimat), dan relevan dengan konteks node tersebut.`;
+
+  let answer;
+  if(!apiKey||aiProv==='demo'){
+    await sleep(700);
+    answer=`${ctx.current}: Ini adalah area yang mencakup beberapa dimensi penting — definisi yang jelas, konteks penerapan di Indonesia, dan langkah implementasi yang terukur.`;
+  }else{
+    try{
+      const messages=n.chat.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}));
+      answer=await callAI(messages,system);
+    }catch(e){
+      answer=`Error: ${e.message}`;
+    }
+  }
+  thinking.remove();
+  n.chat.push({role:'ai',content:answer});
+  renderChat(sel);
+  scheduleAutosave();
 }
 
 document.getElementById('ai-q').addEventListener('keydown',e=>{
@@ -1252,7 +1295,7 @@ async function expandAI(id){
   let items;
   if(apiKey&&aiProv!=='demo'){
     try{
-      const res=await callAI(`Buat 5 sub-topik singkat untuk "${text}". Satu per baris.`);
+      const res=await callAI([{role:'user',content:`Buat 5 sub-topik singkat untuk "${text}". Satu per baris.`}]);
       items=res.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,5);
     }catch{items=(DEMO_BANK[text]||DEMO_BANK.default).slice(0,5);}
   }else{
@@ -1267,18 +1310,21 @@ async function expandAI(id){
 // ═══════════════════════════════════════════════
 //  AI API CALLS
 // ═══════════════════════════════════════════════
-async function callAI(prompt){
+async function callAI(messages,system){
   if(aiProv==='openai'){
+    const msgs=system?[{role:'system',content:system},...messages]:messages;
     const r=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:400})
+      body:JSON.stringify({model:'gpt-4o-mini',messages:msgs,max_tokens:400})
     });
     const d=await r.json();
     if(d.error) throw new Error(d.error.message);
     return d.choices[0].message.content;
   }
   if(aiProv==='claude'){
+    const body={model:'claude-haiku-4-5-20251001',max_tokens:400,messages};
+    if(system) body.system=system;
     const r=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{
@@ -1287,7 +1333,7 @@ async function callAI(prompt){
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:400,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify(body)
     });
     const d=await r.json();
     if(d.error) throw new Error(d.error.message);

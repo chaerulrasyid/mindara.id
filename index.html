@@ -320,6 +320,7 @@
 <div id="ctx">
   <div class="ctx-item" onclick="ctx_addChild()">＋ Tambah Cabang</div>
   <div class="ctx-item" onclick="ctx_edit()">✎ Edit Teks</div>
+  <div class="ctx-item" onclick="ctx_note()">▤ Catatan</div>
   <div class="ctx-item" onclick="ctx_color()">◉ Ganti Warna</div>
   <div class="ctx-sep"></div>
   <div class="ctx-item" onclick="ctx_expand()">✦ Kembangkan dengan AI</div>
@@ -335,6 +336,18 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeEdit()">Batal</button>
       <button class="btn btn-primary" onclick="confirmEdit()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="modal-overlay" id="note-modal">
+  <div class="modal-box">
+    <h3>Catatan Node</h3>
+    <textarea class="modal-input" id="note-inp" rows="5" placeholder="Tulis catatan untuk node ini..."></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeNoteModal()">Batal</button>
+      <button class="btn btn-primary" onclick="confirmNote()">Simpan</button>
     </div>
   </div>
 </div>

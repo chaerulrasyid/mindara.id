@@ -847,6 +847,27 @@ function renderNode(n, layer, w) {
   addG.addEventListener('click',e=>{e.stopPropagation(); openEdit(null,n.id);});
   g.appendChild(addG);
 
+  // Note indicator
+  if(n.note){
+    const noteG=svgEl('g');
+    noteG.setAttribute('class','note-badge');
+    noteG.setAttribute('transform',`translate(${w-9},9)`);
+    noteG.setAttribute('pointer-events','none');
+    const nb=svgEl('circle');
+    nb.setAttribute('r','5');
+    nb.setAttribute('fill',tc); nb.setAttribute('opacity','0.55');
+    noteG.appendChild(nb);
+    const nl1=svgEl('line');
+    nl1.setAttribute('x1','-2.2'); nl1.setAttribute('y1','-1.2'); nl1.setAttribute('x2','2.2'); nl1.setAttribute('y2','-1.2');
+    nl1.setAttribute('stroke',n.ca); nl1.setAttribute('stroke-width','1'); nl1.setAttribute('stroke-linecap','round');
+    noteG.appendChild(nl1);
+    const nl2=svgEl('line');
+    nl2.setAttribute('x1','-2.2'); nl2.setAttribute('y1','1.2'); nl2.setAttribute('x2','1.2'); nl2.setAttribute('y2','1.2');
+    nl2.setAttribute('stroke',n.ca); nl2.setAttribute('stroke-width','1'); nl2.setAttribute('stroke-linecap','round');
+    noteG.appendChild(nl2);
+    g.appendChild(noteG);
+  }
+
   // Events
   g.addEventListener('mousedown', e=>onNodeDown(e,n.id));
   g.addEventListener('click',     e=>{e.stopPropagation(); if(!didDrag) selectNode(n.id);});
@@ -1000,6 +1021,7 @@ function ctx_edit(){hideCtx();openEdit(ctxId);}
 function ctx_delete(){hideCtx();sel=ctxId;deleteSelected();}
 function ctx_expand(){hideCtx();selectNode(ctxId);expandAI(ctxId);}
 function ctx_color(){hideCtx();openColorModal(ctxId);}
+function ctx_note(){hideCtx();openNoteModal(ctxId);}
 
 // ═══════════════════════════════════════════════
 //  EDIT MODAL
@@ -1023,6 +1045,27 @@ function confirmEdit(){
 document.getElementById('edit-inp').addEventListener('keydown',e=>{
   if(e.key==='Enter') confirmEdit();
   if(e.key==='Escape') closeEdit();
+});
+
+// ═══════════════════════════════════════════════
+//  NOTE MODAL
+// ═══════════════════════════════════════════════
+let noteId=null;
+function openNoteModal(id){
+  noteId=id;
+  document.getElementById('note-inp').value=nodes[id]?.note||'';
+  document.getElementById('note-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('note-inp').focus(),80);
+}
+function closeNoteModal(){document.getElementById('note-modal').classList.remove('open');noteId=null;}
+function confirmNote(){
+  const t=document.getElementById('note-inp').value.trim();
+  if(noteId){ if(t) nodes[noteId].note=t; else delete nodes[noteId].note; }
+  closeNoteModal();
+  render();
+}
+document.getElementById('note-inp').addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeNoteModal();
 });
 
 // ═══════════════════════════════════════════════
@@ -1063,7 +1106,7 @@ function closeColorModal(){document.getElementById('color-modal').classList.remo
 // ═══════════════════════════════════════════════
 document.addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
-  if(e.key==='Escape')                       {hideCtx();closeEdit();closeApiModal();closeColorModal();closeGridPanel();closeBgPanel();}
+  if(e.key==='Escape')                       {hideCtx();closeEdit();closeNoteModal();closeApiModal();closeColorModal();closeGridPanel();closeBgPanel();}
   if(e.key==='Delete'||e.key==='Backspace')  deleteSelected();
   if(e.key==='Tab')  {e.preventDefault();addChild();}
   if(e.key==='F2')   {if(sel) openEdit(sel);}

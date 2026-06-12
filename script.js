@@ -28,72 +28,6 @@ const PALETTE = [
 const TEXT_LIGHT = '#FFFCF8';
 const TEXT_DARK  = '#003B35';
 
-// ═══════════════════════════════════════════════
-//  DEMO MAP STRUCTURES
-// ═══════════════════════════════════════════════
-const DEMO_MAPS = {
-  'Skripsi S1': {
-    root: 'Skripsi S1',
-    branches: [
-      { label: 'Pendahuluan',    children: ['Latar Belakang','Rumusan Masalah','Tujuan','Manfaat'] },
-      { label: 'Kajian Pustaka', children: ['Teori Utama','Penelitian Terdahulu','Kerangka Berpikir'] },
-      { label: 'Metodologi',     children: ['Jenis Penelitian','Populasi & Sampel','Teknik Analisis'] },
-      { label: 'Hasil & Bahasan',children: ['Temuan Data','Analisis','Diskusi','Implikasi'] },
-      { label: 'Penutup',        children: ['Kesimpulan','Saran','Keterbatasan'] },
-    ]
-  },
-  'Rencana Bisnis Startup': {
-    root: 'Rencana Bisnis',
-    branches: [
-      { label: 'Value Proposition', children: ['Problem Statement','Solusi','Unique Selling Point'] },
-      { label: 'Target Market',     children: ['Segmen Utama','Customer Persona','Market Size'] },
-      { label: 'Model Bisnis',      children: ['Revenue Stream','Struktur Biaya','Channel'] },
-      { label: 'Operasional',       children: ['Tim Inti','Tech Stack','Roadmap'] },
-      { label: 'Keuangan',          children: ['Proyeksi Revenue','Break Even','Funding Need'] },
-    ]
-  },
-  'Agentic AI': {
-    root: 'Agentic AI',
-    branches: [
-      { label: 'Arsitektur',   children: ['Planning Engine','Memory Module','Tool Executor','Orchestrator'] },
-      { label: 'Use Cases',    children: ['Otomasi Bisnis','Customer Service','Data Analysis','Code Assistant'] },
-      { label: 'Tools & RAG',  children: ['Vector DB','LLM API','Function Calling','Knowledge Base'] },
-      { label: 'Tantangan',    children: ['Hallucination','Keamanan','Biaya Operasi','Kontrol'] },
-      { label: 'Masa Depan',   children: ['Multi-Agent','AGI','Regulasi AI'] },
-    ]
-  },
-  'Manajemen Proyek': {
-    root: 'Manajemen Proyek',
-    branches: [
-      { label: 'Perencanaan',  children: ['Scope','Timeline','Resource Plan','Budget'] },
-      { label: 'Eksekusi',     children: ['Task Assignment','Daily Standup','Sprint','Deliverable'] },
-      { label: 'Monitoring',   children: ['KPI','Progress Report','Risk Register','Status Meeting'] },
-      { label: 'Tim',          children: ['Struktur Tim','Peran & Tanggung Jawab','Komunikasi'] },
-      { label: 'Penutupan',    children: ['Evaluasi','Lessons Learned','Dokumentasi'] },
-    ]
-  },
-  'Belajar Data Science': {
-    root: 'Data Science',
-    branches: [
-      { label: 'Fondasi',       children: ['Statistik','Matematika','Python/R','SQL'] },
-      { label: 'Data Wrangling',children: ['Pandas','Cleaning','EDA','Feature Engineering'] },
-      { label: 'Machine Learning',children:['Supervised','Unsupervised','Model Evaluation','Tuning'] },
-      { label: 'Deep Learning', children: ['Neural Network','CNN','RNN','Transformers'] },
-      { label: 'Portfolio',     children: ['Kaggle','GitHub','Blog','Project Nyata'] },
-    ]
-  },
-  'Strategi Karir': {
-    root: 'Strategi Karir',
-    branches: [
-      { label: 'Self Assessment', children: ['Skill Audit','Passion','Nilai Hidup','Kepribadian'] },
-      { label: 'Target Karir',    children: ['Role Impian','Industri','Timeline 5 Tahun'] },
-      { label: 'Skill Building',  children: ['Hard Skill','Soft Skill','Sertifikasi','Mentoring'] },
-      { label: 'Personal Brand',  children: ['LinkedIn','Portfolio','Networking','Konten'] },
-      { label: 'Eksekusi',        children: ['Lamaran','Interview','Negosiasi','Onboarding'] },
-    ]
-  },
-};
-
 const DEMO_BANK = {
   default:           ['Pengertian','Manfaat','Tantangan','Implementasi','Contoh Kasus','Evaluasi','Referensi'],
   'Agentic AI':      ['Arsitektur Agent','Memory Module','Planning Engine','Tool Use','Multi-Agent','RAG','Evaluasi'],
@@ -515,109 +449,19 @@ async function panelGenerate() {
 }
 
 // ═══════════════════════════════════════════════
-//  AI GENERATE FROM PROMPT
+//  GENERATE NEW MAP (root node only)
 // ═══════════════════════════════════════════════
 async function generateMap(topic) {
-  // Show generating overlay
-  const overlay = document.getElementById('gen-overlay');
-  document.getElementById('gen-topic-label').textContent = `"${topic}"`;
-  overlay.classList.add('show');
-
-  const statuses = [
-    'Menganalisis topik...',
-    'Merancang struktur peta...',
-    'Menyusun cabang utama...',
-    'Menambahkan detail...',
-    'Selesai!'
-  ];
-  let si = 0;
-  const statusEl = document.getElementById('gen-status');
-  const statusInterval = setInterval(() => {
-    if (si < statuses.length - 1) {
-      statusEl.textContent = statuses[++si];
-    }
-  }, 400);
-
-  try {
-    let mapData;
-
-    if (apiKey && aiProv !== 'demo') {
-      mapData = await generateFromAI(topic);
-    } else {
-      await sleep(2000);
-      mapData = getDemoMap(topic);
-    }
-
-    clearInterval(statusInterval);
-    statusEl.textContent = 'Selesai!';
-    await sleep(300);
-
-    overlay.classList.remove('show');
-    buildMapFromData(mapData);
-
-  } catch(e) {
-    clearInterval(statusInterval);
-    overlay.classList.remove('show');
-    toast('Gagal generate. Menggunakan mode demo.');
-    await sleep(200);
-    buildMapFromData(getDemoMap(topic));
-  }
-}
-
-function getDemoMap(topic) {
-  // Find closest match
-  for (const key of Object.keys(DEMO_MAPS)) {
-    if (topic.toLowerCase().includes(key.toLowerCase()) ||
-        key.toLowerCase().includes(topic.toLowerCase().split(' ')[0])) {
-      return DEMO_MAPS[key];
-    }
-  }
-  // Generic fallback
-  return {
-    root: topic,
-    branches: [
-      { label: 'Pengertian',    children: ['Definisi','Sejarah','Ruang Lingkup'] },
-      { label: 'Komponen Utama',children: ['Elemen 1','Elemen 2','Elemen 3'] },
-      { label: 'Manfaat',       children: ['Bagi Individu','Bagi Organisasi','Bagi Masyarakat'] },
-      { label: 'Tantangan',     children: ['Internal','Eksternal','Solusi'] },
-      { label: 'Implementasi',  children: ['Perencanaan','Eksekusi','Evaluasi'] },
-    ]
-  };
-}
-
-async function generateFromAI(topic) {
-  const prompt = `Buat struktur mind map untuk topik "${topic}" dalam bahasa Indonesia.
-Jawab HANYA dengan JSON valid tanpa markdown, format:
-{"root":"${topic}","branches":[{"label":"Cabang Utama","children":["anak1","anak2","anak3"]}]}
-Buat 4-5 cabang utama, setiap cabang 3-4 anak. Singkat dan padat.`;
-
-  const result = await callAI([{role:'user',content:prompt}]);
-
-  // Extract JSON from response
-  const jsonMatch = result.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('Invalid JSON response');
-  return JSON.parse(jsonMatch[0]);
-}
-
-function buildMapFromData(data) {
   nodes = {};
   const wrap = document.getElementById('canvas-wrap');
   const W = wrap.clientWidth || 900;
   const H = wrap.clientHeight || 600;
-  const cx = W / 2, cy = H / 2;
 
-  const rootId = createNode(null, data.root, cx, cy);
+  createNode(null, topic, W / 2, H / 2);
 
-  data.branches.forEach(branch => {
-    const branchId = createNode(rootId, branch.label, 0, 0);
-    branch.children?.forEach(child => createNode(branchId, child, 0, 0));
-  });
-
-  layoutAll(cx, cy);
-
-  vx = 0; vy = 0; vs = 0.85;
+  vx = 0; vy = 0; vs = 1;
   updateVP(); render(); checkEmpty();
-  toast(`✦ Peta "${data.root}" berhasil dibuat`);
+  toast(`✦ Peta "${topic}" dibuat`);
 }
 
 // ═══════════════════════════════════════════════

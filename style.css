@@ -206,59 +206,6 @@ body {
   border-color: var(--primary);
 }
 
-/* Generating state overlay */
-#gen-overlay {
-  position: fixed; inset: 0;
-  background: var(--bg);
-  z-index: 4000;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-}
-#gen-overlay.show { display: flex; }
-
-.gen-logo {
-  font-family: var(--font-head);
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--primary);
-  letter-spacing: -0.8px;
-  margin-bottom: 8px;
-}
-.gen-logo .dot { color: var(--accent); }
-
-.gen-topic {
-  font-size: 14px;
-  color: var(--text-muted);
-  font-family: var(--font-head);
-}
-
-.gen-progress {
-  width: 240px;
-  height: 3px;
-  background: var(--surface2);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.gen-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  border-radius: 10px;
-  animation: progress 2s ease-in-out forwards;
-}
-@keyframes progress {
-  from { width: 0%; }
-  to   { width: 90%; }
-}
-
-.gen-status {
-  font-size: 12.5px;
-  color: var(--text-faint);
-  font-family: var(--font-body);
-}
-
 /* ══════════════════════════════════════════════
    TOOLBAR (hidden — replaced by floating UI)
 ══════════════════════════════════════════════ */

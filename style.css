@@ -703,18 +703,6 @@ body {
 }
 #zoom-hud .zoom-val { color: var(--primary); font-weight: 700; min-width: 38px; }
 
-#shortcuts {
-  position: absolute; bottom: 18px; right: 18px;
-  background: rgba(255,252,248,0.93); border: 1.5px solid var(--border-soft);
-  border-radius: 8px; padding: 10px 14px;
-  font-size: 11px; color: var(--text-faint); line-height: 2; font-family: var(--font-body);
-}
-kbd {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 3px; padding: 1px 6px;
-  font-family: var(--font-head); font-size: 10px; color: var(--text); font-weight: 600;
-}
-
 /* ── SPINNER & TOAST ── */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin {

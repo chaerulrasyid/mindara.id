@@ -480,6 +480,15 @@ function setEditorTool(tool) {
   }
 }
 
+// Auto-simpan ke localStorage tiap kali peta berubah (debounce),
+// supaya canvas tidak "kosong lagi" kalau tab ditutup tanpa klik Save/←.
+let autosaveTimer = null;
+function scheduleAutosave() {
+  if (!currentCanvasId) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => _saveToSlot(false), 600);
+}
+
 function _saveToSlot(showToast = true) {
   if (!currentCanvasId) return;
   localStorage.setItem('mi_canvas_' + currentCanvasId, JSON.stringify({ nodes }));
@@ -711,6 +720,7 @@ function render() {
   renderEdges();
   renderNodes();
   document.getElementById('node-count').textContent = Object.keys(nodes).length+' node';
+  scheduleAutosave();
 }
 
 function renderEdges() {

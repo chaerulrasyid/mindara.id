@@ -405,6 +405,17 @@ body {
 .gp-chip:hover { background: var(--surface); color: var(--text); }
 .gp-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
+/* ── BACKGROUND COLOR POPOVER ── */
+.bg-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.bg-swatch {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 1.5px solid var(--border); cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  padding: 0;
+}
+.bg-swatch:hover { transform: scale(1.08); }
+.bg-swatch.active { border-color: var(--primary); border-width: 2px; box-shadow: 0 0 0 2px rgba(0,59,53,0.15); }
+
 /* AI button accent */
 .ls-btn.ls-ai { background: var(--accent); color: var(--text); }
 .ls-btn.ls-ai:hover { background: var(--accent-hover); color: #fff; }
@@ -470,7 +481,7 @@ body {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--canvas-bg, var(--bg));
   cursor: grab;
   --grid-size: 28px;
   --grid-opacity: 0.1;

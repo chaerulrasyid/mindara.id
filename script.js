@@ -377,11 +377,8 @@ function setGridStyle(v)   { gridStyle = v;   localStorage.setItem('mi_grid_styl
 function setGridSize(v)    { gridSize = v;    localStorage.setItem('mi_grid_size', v);    applyGridSettings(); }
 function setGridOpacity(v) { gridOpacity = v; localStorage.setItem('mi_grid_opacity', v); applyGridSettings(); }
 
-function toggleGridPanel(e) {
-  e.stopPropagation();
-  const pop = document.getElementById('grid-popover');
-  if (pop.classList.contains('open')) { closeGridPanel(); return; }
-  const r = document.getElementById('ls-grid').getBoundingClientRect();
+function openPopoverNear(pop, btn) {
+  const r = btn.getBoundingClientRect();
   pop.style.left = (r.right + 10) + 'px';
   pop.style.top  = r.top + 'px';
   pop.classList.add('open');
@@ -390,13 +387,76 @@ function toggleGridPanel(e) {
     pop.style.top = Math.max(10, window.innerHeight - ph - 10) + 'px';
   }
 }
+
+function toggleGridPanel(e) {
+  e.stopPropagation();
+  const pop = document.getElementById('grid-popover');
+  if (pop.classList.contains('open')) { closeGridPanel(); return; }
+  closeBgPanel();
+  openPopoverNear(pop, document.getElementById('ls-grid'));
+}
 function closeGridPanel() {
   document.getElementById('grid-popover').classList.remove('open');
 }
+
+// ═══════════════════════════════════════════════
+//  BACKGROUND COLOR SETTINGS
+// ═══════════════════════════════════════════════
+const BG_COLORS = [
+  { v: '',        hex: '#FFFCF8', label: 'Default'      },
+  { v: '#FFFFFF', hex: '#FFFFFF', label: 'Putih'        },
+  { v: '#F2F0EC', hex: '#F2F0EC', label: 'Abu Lembut'   },
+  { v: '#EAF2F0', hex: '#EAF2F0', label: 'Mint Lembut'  },
+  { v: '#EAF0F5', hex: '#EAF0F5', label: 'Biru Lembut'  },
+  { v: '#FDF6E8', hex: '#FDF6E8', label: 'Kuning Lembut'},
+  { v: '#FBEFEF', hex: '#FBEFEF', label: 'Pink Lembut'  },
+  { v: '#EFEAF5', hex: '#EFEAF5', label: 'Ungu Lembut'  },
+];
+
+let bgColor = localStorage.getItem('mi_bg_color') || '';
+
+function buildBgSwatches() {
+  const wrap = document.getElementById('bg-swatches');
+  wrap.innerHTML = '';
+  BG_COLORS.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'bg-swatch';
+    btn.dataset.bg = c.v;
+    btn.title = c.label;
+    btn.style.background = c.hex;
+    btn.onclick = () => setBgColor(c.v);
+    wrap.appendChild(btn);
+  });
+}
+
+function applyBgColor() {
+  const wrap = document.getElementById('canvas-wrap');
+  if (bgColor) wrap.style.setProperty('--canvas-bg', bgColor);
+  else wrap.style.removeProperty('--canvas-bg');
+  document.querySelectorAll('.bg-swatch').forEach(b => b.classList.toggle('active', b.dataset.bg === bgColor));
+}
+
+function setBgColor(v) { bgColor = v; localStorage.setItem('mi_bg_color', v); applyBgColor(); }
+
+function toggleBgPanel(e) {
+  e.stopPropagation();
+  const pop = document.getElementById('bg-popover');
+  if (pop.classList.contains('open')) { closeBgPanel(); return; }
+  closeGridPanel();
+  openPopoverNear(pop, document.getElementById('ls-bgcolor'));
+}
+function closeBgPanel() {
+  document.getElementById('bg-popover').classList.remove('open');
+}
+
 document.addEventListener('click', e => {
-  const pop = document.getElementById('grid-popover');
-  if (pop.classList.contains('open') && !pop.contains(e.target) && !document.getElementById('ls-grid').contains(e.target)) {
+  const gridPop = document.getElementById('grid-popover');
+  if (gridPop.classList.contains('open') && !gridPop.contains(e.target) && !document.getElementById('ls-grid').contains(e.target)) {
     closeGridPanel();
+  }
+  const bgPop = document.getElementById('bg-popover');
+  if (bgPop.classList.contains('open') && !bgPop.contains(e.target) && !document.getElementById('ls-bgcolor').contains(e.target)) {
+    closeBgPanel();
   }
 });
 
@@ -973,7 +1033,7 @@ function closeColorModal(){document.getElementById('color-modal').classList.remo
 // ═══════════════════════════════════════════════
 document.addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
-  if(e.key==='Escape')                       {hideCtx();closeEdit();closeApiModal();closeColorModal();closeGridPanel();}
+  if(e.key==='Escape')                       {hideCtx();closeEdit();closeApiModal();closeColorModal();closeGridPanel();closeBgPanel();}
   if(e.key==='Delete'||e.key==='Backspace')  deleteSelected();
   if(e.key==='Tab')  {e.preventDefault();addChild();}
   if(e.key==='F2')   {if(sel) openEdit(sel);}
@@ -1203,6 +1263,8 @@ window.addEventListener('load',()=>{
     b.className='api-badge set';
   }
   applyGridSettings();
+  buildBgSwatches();
+  applyBgColor();
   updateVP();
   // Mulai dari dashboard
   showDashboard();

@@ -192,8 +192,8 @@
 
   <div class="ls-sep"></div>
 
-  <!-- Background color (soon) -->
-  <button class="ls-btn disabled" data-tip="Warna Latar (Segera)">
+  <!-- Background color -->
+  <button class="ls-btn" id="ls-bgcolor" onclick="toggleBgPanel(event)" data-tip="Warna Latar">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 000 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.3-.4-.6-.4-1 0-1.1.9-2 2-2h2.4A5.5 5.5 0 0022 12 10 10 0 0012 2z"/><circle cx="7" cy="10" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14" cy="7" r="1"/><circle cx="17" cy="10" r="1"/></svg>
   </button>
   <!-- Dots/Grid toggle -->
@@ -239,6 +239,12 @@
     <button class="gp-chip" data-gopacity="med" onclick="setGridOpacity('med')">Med</button>
     <button class="gp-chip" data-gopacity="strong" onclick="setGridOpacity('strong')">Strong</button>
   </div>
+</div>
+
+<!-- BACKGROUND COLOR POPOVER -->
+<div id="bg-popover" class="grid-popover">
+  <div class="gp-label">Warna Latar Canvas</div>
+  <div class="bg-swatches" id="bg-swatches"></div>
 </div>
 
 <!-- ══════════════════════════════════════════════

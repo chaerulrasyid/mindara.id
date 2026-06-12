@@ -404,13 +404,14 @@ function closeGridPanel() {
 // ═══════════════════════════════════════════════
 const BG_COLORS = [
   { v: '',        hex: '#FFFCF8', label: 'Default'      },
-  { v: '#FFFFFF', hex: '#FFFFFF', label: 'Putih'        },
+  { v: '#FFFFFF', hex: '#FFFFFF', label: 'Putih Bersih' },
   { v: '#F2F0EC', hex: '#F2F0EC', label: 'Abu Lembut'   },
   { v: '#EAF2F0', hex: '#EAF2F0', label: 'Mint Lembut'  },
   { v: '#EAF0F5', hex: '#EAF0F5', label: 'Biru Lembut'  },
   { v: '#FDF6E8', hex: '#FDF6E8', label: 'Kuning Lembut'},
   { v: '#FBEFEF', hex: '#FBEFEF', label: 'Pink Lembut'  },
   { v: '#EFEAF5', hex: '#EFEAF5', label: 'Ungu Lembut'  },
+  { v: '#1E2228', hex: '#1E2228', label: 'Gelap', dark: true },
 ];
 
 let bgColor = localStorage.getItem('mi_bg_color') || '';
@@ -433,6 +434,9 @@ function applyBgColor() {
   const wrap = document.getElementById('canvas-wrap');
   if (bgColor) wrap.style.setProperty('--canvas-bg', bgColor);
   else wrap.style.removeProperty('--canvas-bg');
+  const entry = BG_COLORS.find(c => c.v === bgColor);
+  if (entry && entry.dark) wrap.setAttribute('data-bg-theme', 'dark');
+  else wrap.removeAttribute('data-bg-theme');
   document.querySelectorAll('.bg-swatch').forEach(b => b.classList.toggle('active', b.dataset.bg === bgColor));
 }
 
@@ -732,11 +736,27 @@ function bezier(x1,y1,x2,y2){
 function renderNodes() {
   const layer=document.getElementById('node-layer');
   layer.innerHTML='';
-  Object.values(nodes).forEach(n=>renderNode(n,layer));
+  const widths = siblingWidths();
+  Object.values(nodes).forEach(n=>renderNode(n,layer,widths[n.id]));
 }
 
-function renderNode(n, layer) {
-  const {w,h,fs}=nodeSize(n.text,n.level);
+// Samakan lebar antar-sibling: pakai lebar terbesar dalam satu grup anak
+function siblingWidths() {
+  const groupMax = {};
+  Object.values(nodes).forEach(n=>{
+    const key = n.parentId || '__root__';
+    const w   = nodeSize(n.text, n.level).w;
+    groupMax[key] = Math.max(groupMax[key] || 0, w);
+  });
+  const widths = {};
+  Object.values(nodes).forEach(n=>{
+    widths[n.id] = groupMax[n.parentId || '__root__'];
+  });
+  return widths;
+}
+
+function renderNode(n, layer, w) {
+  const {h,fs}=nodeSize(n.text,n.level);
   const isSel=n.id===sel, isRoot=n.level===0;
   const tc=n.tc==='dark'?TEXT_DARK:TEXT_LIGHT;
 

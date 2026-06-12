@@ -485,21 +485,26 @@ body {
   cursor: grab;
   --grid-size: 28px;
   --grid-opacity: 0.1;
+  --grid-color: 0 59 53;
 }
 #canvas-wrap.panning { cursor: grabbing; }
 #canvas { width: 100%; height: 100%; }
 
+/* Latar gelap: grid & hint pakai warna terang */
+#canvas-wrap[data-bg-theme="dark"] { --grid-color: 255 255 255; }
+#canvas-wrap[data-bg-theme="dark"] #empty-hint .hint-text { color: rgba(255,255,255,0.45); }
+
 #canvas-wrap::before {
   content: '';
   position: absolute; inset: 0;
-  background-image: radial-gradient(circle, rgb(0 59 53 / var(--grid-opacity)) 1.2px, transparent 1.2px);
+  background-image: radial-gradient(circle, rgb(var(--grid-color) / var(--grid-opacity)) 1.2px, transparent 1.2px);
   background-size: var(--grid-size) var(--grid-size);
   pointer-events: none;
 }
 #canvas-wrap[data-grid-style="lines"]::before {
   background-image:
-    linear-gradient(to right,  rgb(0 59 53 / var(--grid-opacity)) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(0 59 53 / var(--grid-opacity)) 1px, transparent 1px);
+    linear-gradient(to right,  rgb(var(--grid-color) / var(--grid-opacity)) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--grid-color) / var(--grid-opacity)) 1px, transparent 1px);
 }
 #canvas-wrap[data-grid-style="none"]::before {
   background-image: none;

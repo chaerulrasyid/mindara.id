@@ -1,10 +1,10 @@
 /* ── DESIGN TOKENS ────────────────────────────────────────── */
 :root {
-  --bg:            #FFFFFF;
-  --surface:       #F8F5F0;
-  --surface2:      #EFEAE0;
-  --border:        #DED7C8;
-  --border-soft:   #ECE6DC;
+  --bg:            #FFFCF8;
+  --surface:       #F4EFE6;
+  --surface2:      #EAE3D6;
+  --border:        #D4C9B5;
+  --border-soft:   #E4DDD0;
   --text:          #003B35;
   --text-muted:    #4A7A72;
   --text-faint:    #7A9E99;
@@ -20,14 +20,14 @@
 
 /* ── DARK THEME ───────────────────────────────────────────── */
 :root[data-theme="dark"] {
-  --bg:            #161616;
-  --surface:       #1E1E1E;
-  --surface2:      #292929;
-  --border:        #3D3D3D;
-  --border-soft:   #2A2A2A;
-  --text:          #EDEBE6;
-  --text-muted:    #A8A6A1;
-  --text-faint:    #6E6C68;
+  --bg:            #0d1f1d;
+  --surface:       #182823;
+  --surface2:      #21342E;
+  --border:        #35493F;
+  --border-soft:   #263530;
+  --text:          #F4EFE6;
+  --text-muted:    #9BB8AF;
+  --text-faint:    #5E7B72;
   --primary:       #38988A;
   --primary-hover: #4AB29F;
   --accent:        #FFA858;

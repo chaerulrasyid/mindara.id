@@ -332,7 +332,7 @@ function closeGridPanel() {
 //  BACKGROUND COLOR SETTINGS
 // ═══════════════════════════════════════════════
 const BG_COLORS = [
-  { v: '',        hex: '#FFFFFF', label: 'Default'      },
+  { v: '',        hex: '#FFFCF8', label: 'Default'      },
   { v: '#FFFFFF', hex: '#FFFFFF', label: 'Putih Bersih' },
   { v: '#F2F0EC', hex: '#F2F0EC', label: 'Abu Lembut'   },
   { v: '#EAF2F0', hex: '#EAF2F0', label: 'Mint Lembut'  },

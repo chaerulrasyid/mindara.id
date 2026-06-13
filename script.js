@@ -1317,6 +1317,22 @@ function saveApiKey(){
 }
 
 // ═══════════════════════════════════════════════
+//  THEME (TERANG / GELAP)
+// ═══════════════════════════════════════════════
+let theme = localStorage.getItem('mi_theme') || 'light';
+
+function applyTheme() {
+  if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+}
+
+function toggleTheme() {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('mi_theme', theme);
+  applyTheme();
+}
+
+// ═══════════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════════
 function toast(msg){
@@ -1331,6 +1347,7 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 //  BOOT
 // ═══════════════════════════════════════════════
 window.addEventListener('load',()=>{
+  applyTheme();
   if(apiKey&&aiProv!=='demo'){
     const b=document.getElementById('api-badge');
     b.textContent=aiProv==='openai'?'OpenAI':'Claude';

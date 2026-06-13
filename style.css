@@ -18,6 +18,29 @@
   --font-body:     'SF Pro Display','SF Pro',-apple-system,BlinkMacSystemFont,'Inter',sans-serif;
 }
 
+/* ── DARK THEME ───────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --bg:            #10201C;
+  --surface:       #182823;
+  --surface2:      #21342E;
+  --border:        #35493F;
+  --border-soft:   #263530;
+  --text:          #F4EFE6;
+  --text-muted:    #9BB8AF;
+  --text-faint:    #5E7B72;
+  --primary:       #38988A;
+  --primary-hover: #4AB29F;
+  --accent:        #FFA858;
+  --accent-hover:  #FFBE7D;
+  --danger:        #E2685C;
+  --success:       #3ECCA8;
+}
+/* Grid dots/lines tetap kontras di canvas gelap (kecuali bg canvas custom) */
+:root[data-theme="dark"] #canvas-wrap:not([data-bg-theme]) { --grid-color: 255 255 255; }
+/* Backdrop modal lebih gelap agar tetap kontras */
+:root[data-theme="dark"] .modal-overlay,
+:root[data-theme="dark"] .dash-overlay { background: rgba(0,0,0,0.55); }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -755,6 +778,9 @@ textarea.modal-input { resize: vertical; min-height: 90px; line-height: 1.5; }
   color: var(--text-muted); cursor: pointer; transition: all 0.12s;
 }
 .dash-icon-btn:hover { border-color: var(--text); color: var(--text); background: var(--surface); }
+.theme-icon-dark { display: none; }
+:root[data-theme="dark"] .theme-icon-light { display: none; }
+:root[data-theme="dark"] .theme-icon-dark { display: block; }
 .dash-user {
   width: 32px; height: 32px; border-radius: 50%;
   background: var(--surface2); border: 1.5px solid var(--border);

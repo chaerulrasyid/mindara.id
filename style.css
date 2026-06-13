@@ -621,7 +621,16 @@ body {
 .ctx-item:hover { background: var(--surface); }
 .ctx-item.danger { color: var(--danger); }
 .ctx-item.danger:hover { background: rgba(192,57,43,0.06); }
+.ctx-item.active { color: var(--primary); font-weight: 700; }
 .ctx-sep { height: 1.5px; background: var(--border-soft); margin: 4px 0; }
+
+/* ── LAYOUT (RAPIKAN) MENU ── */
+#layout-menu {
+  position: fixed; background: var(--bg);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 4px; z-index: 1000; min-width: 150px;
+  box-shadow: 0 4px 20px rgba(0,59,53,0.1); display: none;
+}
 
 /* ── MODALS ── */
 .modal-overlay {

@@ -97,6 +97,7 @@ const CONTEXT_BANK = {
 let nodes   = {};
 let sel     = null;
 let ctxId   = null;
+let layoutMode = 'both'; // 'both' | 'right' | 'left'
 let vx=0, vy=0, vs=1;
 let panning=false, px0=0, py0=0, pvx0=0, pvy0=0;
 let dragId=null, dox=0, doy=0, didDrag=false;
@@ -467,7 +468,7 @@ async function generateMap(topic) {
 // ═══════════════════════════════════════════════
 //  HORIZONTAL TREE LAYOUT
 // ═══════════════════════════════════════════════
-const X_GAP = 210;  // jarak horizontal antar level
+const X_GAP = 60;   // jarak horizontal bersih antar tepi node antar level
 const Y_GAP = 22;   // jarak vertikal antar sibling
 
 function childrenOf(pid) {
@@ -475,30 +476,36 @@ function childrenOf(pid) {
 }
 
 function nodeH(id) {
-  // estimasi tinggi node + padding vertikal
+  // tinggi node = tinggi render asli (teks selalu satu baris, tidak wrap)
   const n = nodes[id];
   if (!n) return 40;
-  const lines = Math.ceil(n.text.length / 16);
-  const base = n.level === 0 ? 44 : n.level === 1 ? 38 : 34;
-  return base * lines;
+  return nodeSize(n.text, n.level).h;
 }
 
-function subtreeH(id) {
+function nodeW(id, widths) {
+  const n = nodes[id];
+  if (!n) return 100;
+  return widths[id] || nodeSize(n.text, n.level).w;
+}
+
+function subtreeH(id, widths) {
   const ch = childrenOf(id);
   if (!ch.length) return nodeH(id);
-  const total = ch.reduce((s, c) => s + subtreeH(c.id), 0) + (ch.length - 1) * Y_GAP;
+  const total = ch.reduce((s, c) => s + subtreeH(c.id, widths), 0) + (ch.length - 1) * Y_GAP;
   return Math.max(nodeH(id), total);
 }
 
-function placeChildren(parent, children, dir) {
+function placeChildren(parent, children, dir, widths) {
   if (!children.length) return;
-  const total = children.reduce((s, c) => s + subtreeH(c.id), 0) + (children.length - 1) * Y_GAP;
+  const total = children.reduce((s, c) => s + subtreeH(c.id, widths), 0) + (children.length - 1) * Y_GAP;
   let y = parent.y - total / 2;
+  const parentW = nodeW(parent.id, widths);
   children.forEach(c => {
-    const h = subtreeH(c.id);
-    c.x = parent.x + dir * X_GAP;
+    const h = subtreeH(c.id, widths);
+    const childW = nodeW(c.id, widths);
+    c.x = parent.x + dir * (parentW / 2 + X_GAP + childW / 2);
     c.y = y + h / 2;
-    placeChildren(c, childrenOf(c.id), dir);
+    placeChildren(c, childrenOf(c.id), dir, widths);
     y += h + Y_GAP;
   });
 }
@@ -511,13 +518,50 @@ function layoutAll(cx, cy) {
   const allCh = childrenOf(root.id);
   if (!allCh.length) return;
 
-  // Bagi rata: separuh kiri, separuh kanan
-  const half  = Math.ceil(allCh.length / 2);
-  const rightCh = allCh.slice(0, half);
-  const leftCh  = allCh.slice(half);
+  // Lebar tiap node (sudah diseragamkan per grup sibling, sama seperti saat render)
+  const widths = siblingWidths();
 
-  placeChildren(root, rightCh,  1);
-  placeChildren(root, leftCh,  -1);
+  if (layoutMode === 'right') {
+    placeChildren(root, allCh, 1, widths);
+  } else if (layoutMode === 'left') {
+    placeChildren(root, allCh, -1, widths);
+  } else {
+    // Bagi rata: separuh kanan, separuh kiri
+    const half  = Math.ceil(allCh.length / 2);
+    const rightCh = allCh.slice(0, half);
+    const leftCh  = allCh.slice(half);
+    placeChildren(root, rightCh,  1, widths);
+    placeChildren(root, leftCh,  -1, widths);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  LAYOUT MENU (pilihan arah Rapikan)
+// ═══════════════════════════════════════════════
+function toggleLayoutMenu(e) {
+  e.stopPropagation();
+  hideCtx();
+  const m   = document.getElementById('layout-menu');
+  const btn = document.getElementById('layout-btn');
+  if (m.style.display === 'block') { m.style.display = 'none'; return; }
+  document.querySelectorAll('#layout-menu .ctx-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.mode === layoutMode);
+  });
+  const r = btn.getBoundingClientRect();
+  m.style.display = 'block';
+  m.style.left = r.left + 'px';
+  m.style.top  = (r.bottom + 6) + 'px';
+  const mr = m.getBoundingClientRect();
+  if (mr.right > innerWidth) m.style.left = (innerWidth - mr.width - 8) + 'px';
+}
+function hideLayoutMenu(){ document.getElementById('layout-menu').style.display = 'none'; }
+document.addEventListener('click', hideLayoutMenu);
+
+function setLayoutMode(mode) {
+  layoutMode = mode;
+  hideLayoutMenu();
+  layoutAll(); render();
+  toast('Peta dirapikan');
 }
 
 // ═══════════════════════════════════════════════

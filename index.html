@@ -132,7 +132,7 @@
   <button class="fb-btn" onclick="saveMap()" title="Simpan">
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
   </button>
-  <button class="fb-btn" onclick="layoutAll();render();toast('Peta dirapikan')" title="Rapikan layout">
+  <button class="fb-btn" id="layout-btn" onclick="toggleLayoutMenu(event)" title="Rapikan layout">
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
   </button>
   <button class="fb-btn" onclick="exportMap()" title="Export">
@@ -320,6 +320,13 @@
   <div class="ctx-item" onclick="ctx_expand()">✦ Kembangkan dengan AI</div>
   <div class="ctx-sep"></div>
   <div class="ctx-item danger" onclick="ctx_delete()">✕ Hapus Node</div>
+</div>
+
+<!-- LAYOUT (RAPIKAN) MENU -->
+<div id="layout-menu">
+  <div class="ctx-item" data-mode="both"  onclick="setLayoutMode('both')">⇄ Kanan &amp; Kiri</div>
+  <div class="ctx-item" data-mode="right" onclick="setLayoutMode('right')">→ Rata Kanan</div>
+  <div class="ctx-item" data-mode="left"  onclick="setLayoutMode('left')">← Rata Kiri</div>
 </div>
 
 <!-- EDIT MODAL -->

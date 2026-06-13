@@ -101,6 +101,7 @@ let layoutMode = 'both'; // 'both' | 'right' | 'left'
 let vx=0, vy=0, vs=1;
 let panning=false, px0=0, py0=0, pvx0=0, pvy0=0;
 let dragId=null, dox=0, doy=0, didDrag=false;
+let dropTargetId=null;
 let apiKey  = localStorage.getItem('mi_key')  || '';
 let aiProv  = localStorage.getItem('mi_prov') || 'demo';
 
@@ -614,11 +615,18 @@ function render() {
 function renderEdges() {
   const layer=document.getElementById('edge-layer');
   layer.innerHTML='';
+  const widths = siblingWidths();
   Object.values(nodes).forEach(n=>{
     if(!n.parentId) return;
     const p=nodes[n.parentId]; if(!p) return;
+    const pw = widths[p.id] || nodeSize(p.text,p.level).w;
+    const cw = widths[n.id] || nodeSize(n.text,n.level).w;
+    // Sambungkan dari sisi kotak yang berhadapan (bukan dari tengah)
+    const dir = n.x >= p.x ? 1 : -1;
+    const x1 = p.x + dir * pw/2;
+    const x2 = n.x - dir * cw/2;
     const el=svgEl('path');
-    el.setAttribute('d', bezier(p.x,p.y,n.x,n.y));
+    el.setAttribute('d', bezier(x1,p.y,x2,n.y));
     el.setAttribute('class','edge');
     el.setAttribute('stroke',n.ca);
     el.setAttribute('opacity','0.45');
@@ -694,6 +702,20 @@ function renderNode(n, layer, w) {
     sr.setAttribute('stroke-width','2.5');
     sr.setAttribute('pointer-events','none');
     g.appendChild(sr);
+  }
+
+  // Drop-target ring (saat drag node lain di atasnya)
+  if(n.id===dropTargetId){
+    const dr=svgEl('rect');
+    dr.setAttribute('x','-3'); dr.setAttribute('y','-3');
+    dr.setAttribute('width',w+6); dr.setAttribute('height',h+6);
+    dr.setAttribute('rx',isRoot?'12':'9');
+    dr.setAttribute('fill','none');
+    dr.setAttribute('stroke','#5BD1B8');
+    dr.setAttribute('stroke-width','3');
+    dr.setAttribute('stroke-dasharray','6 4');
+    dr.setAttribute('pointer-events','none');
+    g.appendChild(dr);
   }
 
   // Root inner detail
@@ -846,13 +868,65 @@ function onDragMove(e){
   didDrag=true;
   const pt=s2c(e.clientX,e.clientY);
   nodes[dragId].x=pt.x+dox; nodes[dragId].y=pt.y+doy;
+  dropTargetId=findDropTarget(dragId);
   render();
 }
 function onDragUp(){
   window.removeEventListener('mousemove',onDragMove);
   window.removeEventListener('mouseup',onDragUp);
+  const targetId=dropTargetId;
+  dropTargetId=null;
+  if(targetId && dragId){
+    reparentNode(dragId, targetId);
+    layoutAll();
+    toast('✦ Cabang dipindahkan');
+  }
   dragId=null;
+  render();
   setTimeout(()=>{didDrag=false;},50);
+}
+
+// Cari node lain yang sedang "ditumpangi" oleh node yang di-drag (kandidat induk baru)
+function findDropTarget(id){
+  const n=nodes[id];
+  if(n.level===0) return null; // root tidak bisa direparent
+  const descendants=collectDescendants(id);
+  const widths=siblingWidths();
+  for(const other of Object.values(nodes)){
+    if(other.id===id) continue;
+    if(other.id===n.parentId) continue;
+    if(descendants.has(other.id)) continue;
+    const w=widths[other.id]||nodeSize(other.text,other.level).w;
+    const h=nodeSize(other.text,other.level).h;
+    if(Math.abs(n.x-other.x)<=w/2 && Math.abs(n.y-other.y)<=h/2) return other.id;
+  }
+  return null;
+}
+
+function collectDescendants(id){
+  const set=new Set();
+  const stack=childrenOf(id).map(c=>c.id);
+  while(stack.length){
+    const cur=stack.pop();
+    set.add(cur);
+    childrenOf(cur).forEach(c=>stack.push(c.id));
+  }
+  return set;
+}
+
+// Pindahkan node (dan seluruh sub-cabangnya) ke induk baru
+function reparentNode(id, newParentId){
+  const delta=(nodes[newParentId].level+1)-nodes[id].level;
+  nodes[id].parentId=newParentId;
+  const queue=[id];
+  while(queue.length){
+    const curId=queue.shift();
+    const cur=nodes[curId];
+    cur.level+=delta;
+    const ci=cur.level % LEVEL_COLORS.length;
+    cur.ca=LEVEL_COLORS[ci].a; cur.cb=LEVEL_COLORS[ci].b; cur.tc=LEVEL_COLORS[ci].t;
+    childrenOf(curId).forEach(c=>queue.push(c.id));
+  }
 }
 
 // ═══════════════════════════════════════════════

@@ -178,7 +178,7 @@ function renderDashboard() {
   const banner   = document.getElementById('dash-banner');
   const atLimit  = canvases.length >= FREE_LIMIT;
 
-  counter.textContent = `${canvases.length}/${FREE_LIMIT} Maps`;
+  counter.textContent = `${canvases.length}/${FREE_LIMIT} Idea Board`;
   counter.className   = 'dash-map-badge' + (atLimit ? ' full' : '');
   banner.className    = 'dash-banner' + (atLimit ? ' show' : '');
   grid.innerHTML      = '';
@@ -198,29 +198,22 @@ function renderDashboard() {
       </div>
       <div class="card-info">
         <div class="card-name">${cv.name}</div>
-        <div class="card-meta">${formatDate(new Date(cv.updatedAt))}</div>
+        <div class="card-meta">Dibuat ${formatDate(new Date(cv.createdAt))}</div>
+        <div class="card-meta">Diakses ${formatDate(new Date(cv.updatedAt))}</div>
       </div>
       <div class="card-actions">
         <button class="card-btn" onclick="event.stopPropagation();openCanvas('${cv.id}')">Buka</button>
+        <button class="card-btn" onclick="event.stopPropagation();toast('Fitur Pindahkan segera hadir')">Pindahkan</button>
         <button class="card-btn card-btn-danger" onclick="event.stopPropagation();deleteCanvas('${cv.id}')">Hapus</button>
       </div>`;
     card.addEventListener('click', () => openCanvas(cv.id));
     grid.appendChild(card);
   });
+}
 
-  // Kartu buat baru / upgrade (di akhir grid atau awal jika kosong)
-  const actionCard = document.createElement('div');
-  if (!atLimit) {
-    actionCard.className = 'canvas-card canvas-new';
-    actionCard.onclick = () => openNameModal();
-    actionCard.innerHTML = `<div class="card-new-icon">＋</div><div class="card-new-label">Canvas Baru</div>`;
-    grid.insertBefore(actionCard, grid.firstChild);
-  } else {
-    actionCard.className = 'canvas-card canvas-upgrade';
-    actionCard.onclick = () => showUpgradeModal();
-    actionCard.innerHTML = `<div class="card-new-icon">✦</div><div class="card-new-label">Upgrade ke Pro</div><div class="card-limit-note">Batas 3 canvas gratis tercapai</div>`;
-    grid.insertBefore(actionCard, grid.firstChild);
-  }
+function handleCreateCanvas() {
+  if (getCanvases().length >= FREE_LIMIT) { showUpgradeModal(); return; }
+  openNameModal();
 }
 
 function openNameModal() {

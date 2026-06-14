@@ -13,16 +13,16 @@ const LEVEL_COLORS = [
 ];
 
 const PALETTE = [
-  { a:'#003B35', b:'#004F46', t:'light', label:'Teal Gelap'    },
-  { a:'#FFA858', b:'#FFB870', t:'dark',  label:'Oranye'        },
-  { a:'#1A6B5C', b:'#228A78', t:'light', label:'Teal Sedang'   },
-  { a:'#C97030', b:'#DD8040', t:'light', label:'Coklat Oranye' },
-  { a:'#004A42', b:'#005A52', t:'light', label:'Teal Tua'      },
-  { a:'#E8924A', b:'#F5A460', t:'dark',  label:'Pasir Terang'  },
-  { a:'#2A7A6A', b:'#38988A', t:'light', label:'Teal Muda'     },
-  { a:'#B86030', b:'#CC7040', t:'light', label:'Coklat Tua'    },
-  { a:'#8B5A2B', b:'#A06A35', t:'light', label:'Coklat'        },
-  { a:'#5A8A80', b:'#6A9A90', t:'light', label:'Abu-teal'      },
+  { a:'#003B35', b:'#0A5A4F', t:'light', label:'Teal'      },
+  { a:'#FFA858', b:'#FFC178', t:'dark',  label:'Amber'     },
+  { a:'#2F6FA8', b:'#4A8FCC', t:'light', label:'Biru'      },
+  { a:'#C85A82', b:'#DC7FA0', t:'light', label:'Pink'      },
+  { a:'#8266C4', b:'#A38BDE', t:'light', label:'Ungu'      },
+  { a:'#3F7A4C', b:'#5A9967', t:'light', label:'Hijau'     },
+  { a:'#D2564F', b:'#E47A73', t:'light', label:'Merah'     },
+  { a:'#E8C547', b:'#F2D873', t:'dark',  label:'Kuning'    },
+  { a:'#9C6B3F', b:'#BA8552', t:'light', label:'Coklat'    },
+  { a:'#33393D', b:'#475056', t:'light', label:'Abu Gelap' },
 ];
 
 const TEXT_LIGHT = '#FFFCF8';

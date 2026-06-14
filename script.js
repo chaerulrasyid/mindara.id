@@ -675,6 +675,25 @@ function siblingWidths() {
   return widths;
 }
 
+// Ubah URL di teks catatan jadi <a> yang bisa diklik, sisanya tetap teks biasa
+const URL_RE=/(https?:\/\/[^\s<>"']+)/gi;
+function linkifyNote(container,text,NS){
+  let last=0;
+  for(const m of text.matchAll(URL_RE)){
+    if(m.index>last) container.appendChild(document.createTextNode(text.slice(last,m.index)));
+    const a=document.createElementNS(NS,'a');
+    a.setAttribute('href',m[0]);
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener noreferrer');
+    a.setAttribute('class','popup-link');
+    a.textContent=m[0];
+    a.addEventListener('click',ev=>ev.stopPropagation());
+    container.appendChild(a);
+    last=m.index+m[0].length;
+  }
+  if(last<text.length) container.appendChild(document.createTextNode(text.slice(last)));
+}
+
 function renderNode(n, layer, w) {
   const {h,fs}=nodeSize(n.text,n.level);
   const isSel=n.id===sel, isRoot=n.level===0;
@@ -840,7 +859,7 @@ function renderNode(n, layer, w) {
     if(n.note){
       const p=document.createElementNS(NS,'div');
       p.setAttribute('class','popup-note');
-      p.textContent=n.note;
+      linkifyNote(p,n.note,NS);
       box.appendChild(p);
     }
     fo.appendChild(box);

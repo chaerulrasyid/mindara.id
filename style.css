@@ -542,6 +542,13 @@ body {
   max-height: 90px;
   overflow: hidden;
 }
+.popup-link {
+  pointer-events: auto;
+  color: var(--primary);
+  text-decoration: underline;
+  word-break: break-all;
+  cursor: pointer;
+}
 
 /* ── AI PANEL ── */
 #ai-panel {

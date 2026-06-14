@@ -20,11 +20,11 @@
 
 /* ── DARK THEME ───────────────────────────────────────────── */
 :root[data-theme="dark"] {
-  --bg:            #0d1f1d;
-  --surface:       #182823;
-  --surface2:      #21342E;
-  --border:        #35493F;
-  --border-soft:   #263530;
+  --bg:            #060e0d;
+  --surface:       #111713;
+  --surface2:      #1A231E;
+  --border:        #2E382F;
+  --border-soft:   #1F2420;
   --text:          #F4EFE6;
   --text-muted:    #9BB8AF;
   --text-faint:    #5E7B72;

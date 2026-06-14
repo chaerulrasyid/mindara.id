@@ -96,6 +96,9 @@ const CONTEXT_BANK = {
 // ═══════════════════════════════════════════════
 let nodes   = {};
 let sel     = null;
+let hoverPreviewId  = null; // node yg badge catatan/gambar-nya sedang di-hover
+let pinnedPreviewId = null; // node yg popup-nya "dipin" lewat klik badge
+let hoverClearTimer = null; // grace period agar cursor bisa pindah dari badge ke popup
 let ctxId   = null;
 let layoutMode = 'both'; // 'both' | 'right' | 'left'
 let vx=0, vy=0, vs=1;
@@ -656,9 +659,21 @@ function bezier(x1,y1,x2,y2){
 function renderNodes() {
   const layer=document.getElementById('node-layer');
   layer.innerHTML='';
-  document.getElementById('popup-layer').innerHTML='';
   const widths = siblingWidths();
   Object.values(nodes).forEach(n=>renderNode(n,layer,widths[n.id]));
+  refreshPopupLayer();
+}
+
+// Popup catatan/gambar hanya tampil saat badge di-hover atau di-pin (klik)
+function refreshPopupLayer(){
+  const popupLayer=document.getElementById('popup-layer');
+  popupLayer.innerHTML='';
+  const id=hoverPreviewId||pinnedPreviewId;
+  const n=nodes[id];
+  if(!n||!(n.note||n.image)) return;
+  const w=siblingWidths()[n.id];
+  const {h}=nodeSize(n.text,n.level);
+  popupLayer.appendChild(buildPopupFO(n,w,h));
 }
 
 // Samakan lebar antar-sibling: pakai lebar terbesar dalam satu grup anak
@@ -693,6 +708,74 @@ function linkifyNote(container,text,NS){
     last=m.index+m[0].length;
   }
   if(last<text.length) container.appendChild(document.createTextNode(text.slice(last)));
+}
+
+// Tampilkan preview, batalkan rencana sembunyikan yg sedang berjalan.
+// Jika popup utk id ini sudah tampil, jangan rebuild DOM -- rebuild di bawah cursor
+// memicu mouseenter baru pada elemen baru -> rebuild lagi -> loop tak berhenti.
+function showPreview(id){
+  if(hoverClearTimer){ clearTimeout(hoverClearTimer); hoverClearTimer=null; }
+  const alreadyShown = hoverPreviewId===id || pinnedPreviewId===id;
+  hoverPreviewId=id;
+  if(!alreadyShown) refreshPopupLayer();
+}
+
+// Jadwalkan sembunyikan preview dgn delay singkat, beri waktu cursor pindah ke popup
+function scheduleHidePreview(id){
+  if(hoverClearTimer) clearTimeout(hoverClearTimer);
+  hoverClearTimer=setTimeout(()=>{
+    if(hoverPreviewId===id){ hoverPreviewId=null; refreshPopupLayer(); }
+    hoverClearTimer=null;
+  },150);
+}
+
+// Hover = preview sementara, klik = pin (tetap tampil setelah cursor pergi)
+function attachBadgePreview(badgeG,id){
+  badgeG.setAttribute('pointer-events','auto');
+  badgeG.style.cursor='pointer';
+  badgeG.addEventListener('mouseenter',()=>showPreview(id));
+  badgeG.addEventListener('mouseleave',()=>scheduleHidePreview(id));
+  badgeG.addEventListener('click',ev=>{
+    ev.stopPropagation();
+    pinnedPreviewId = pinnedPreviewId===id ? null : id;
+    refreshPopupLayer();
+  });
+}
+
+// Bangun foreignObject popup (preview catatan/gambar) utk node n
+function buildPopupFO(n,w,h){
+  const fo=svgEl('foreignObject');
+  fo.setAttribute('class','node-popup-fo');
+  fo.setAttribute('x',n.x-90); fo.setAttribute('y',n.y+h/2+10);
+  fo.setAttribute('width','180'); fo.setAttribute('height','260');
+  const NS='http://www.w3.org/1999/xhtml';
+  const box=document.createElementNS(NS,'div');
+  box.setAttribute('class','node-popup');
+  // Cursor pindah dari badge ke popup tetap dianggap "hover" agar popup tak langsung hilang
+  box.addEventListener('mouseenter',()=>showPreview(n.id));
+  box.addEventListener('mouseleave',()=>scheduleHidePreview(n.id));
+  if(n.image){
+    const wrap=document.createElementNS(NS,'div');
+    wrap.setAttribute('class','popup-img-wrap');
+    const img=document.createElementNS(NS,'img');
+    img.setAttribute('class','popup-img');
+    img.setAttribute('src',n.image);
+    img.addEventListener('click',ev=>{ev.stopPropagation(); openLightbox(n.image);});
+    const rm=document.createElementNS(NS,'div');
+    rm.setAttribute('class','popup-remove');
+    rm.textContent='✕';
+    rm.addEventListener('click',ev=>{ev.stopPropagation(); delete nodes[n.id].image; render();});
+    wrap.appendChild(img); wrap.appendChild(rm);
+    box.appendChild(wrap);
+  }
+  if(n.note){
+    const p=document.createElementNS(NS,'div');
+    p.setAttribute('class','popup-note');
+    linkifyNote(p,n.note,NS);
+    box.appendChild(p);
+  }
+  fo.appendChild(box);
+  return fo;
 }
 
 function renderNode(n, layer, w) {
@@ -793,12 +876,12 @@ function renderNode(n, layer, w) {
   addG.addEventListener('click',e=>{e.stopPropagation(); openEdit(null,n.id);});
   g.appendChild(addG);
 
-  // Note indicator
+  // Note indicator — hover/klik utk preview popup
   if(n.note){
     const noteG=svgEl('g');
     noteG.setAttribute('class','note-badge');
     noteG.setAttribute('transform',`translate(${w-9},9)`);
-    noteG.setAttribute('pointer-events','none');
+    attachBadgePreview(noteG,n.id);
     const nb=svgEl('circle');
     nb.setAttribute('r','5');
     nb.setAttribute('fill',tc); nb.setAttribute('opacity','0.55');
@@ -814,12 +897,12 @@ function renderNode(n, layer, w) {
     g.appendChild(noteG);
   }
 
-  // Image indicator
+  // Image indicator — hover/klik utk preview popup
   if(n.image){
     const imgG=svgEl('g');
     imgG.setAttribute('class','image-badge');
     imgG.setAttribute('transform',`translate(${n.note?w-24:w-9},9)`);
-    imgG.setAttribute('pointer-events','none');
+    attachBadgePreview(imgG,n.id);
     const ib=svgEl('circle');
     ib.setAttribute('r','5');
     ib.setAttribute('fill',tc); ib.setAttribute('opacity','0.55');
@@ -833,40 +916,6 @@ function renderNode(n, layer, w) {
     mtn.setAttribute('fill',n.ca);
     imgG.appendChild(mtn);
     g.appendChild(imgG);
-  }
-
-  // Preview popup (catatan / gambar) saat node terpilih — ditaruh di popup-layer
-  // (lapisan terpisah di atas node-layer) agar selalu tampil di depan node lain.
-  if(n.id===sel && (n.note||n.image)){
-    const fo=svgEl('foreignObject');
-    fo.setAttribute('class','node-popup-fo');
-    fo.setAttribute('x',n.x-90); fo.setAttribute('y',n.y+h/2+10);
-    fo.setAttribute('width','180'); fo.setAttribute('height','260');
-    const NS='http://www.w3.org/1999/xhtml';
-    const box=document.createElementNS(NS,'div');
-    box.setAttribute('class','node-popup');
-    if(n.image){
-      const wrap=document.createElementNS(NS,'div');
-      wrap.setAttribute('class','popup-img-wrap');
-      const img=document.createElementNS(NS,'img');
-      img.setAttribute('class','popup-img');
-      img.setAttribute('src',n.image);
-      img.addEventListener('click',ev=>{ev.stopPropagation(); openLightbox(n.image);});
-      const rm=document.createElementNS(NS,'div');
-      rm.setAttribute('class','popup-remove');
-      rm.textContent='✕';
-      rm.addEventListener('click',ev=>{ev.stopPropagation(); delete nodes[n.id].image; selectNode(sel);});
-      wrap.appendChild(img); wrap.appendChild(rm);
-      box.appendChild(wrap);
-    }
-    if(n.note){
-      const p=document.createElementNS(NS,'div');
-      p.setAttribute('class','popup-note');
-      linkifyNote(p,n.note,NS);
-      box.appendChild(p);
-    }
-    fo.appendChild(box);
-    document.getElementById('popup-layer').appendChild(fo);
   }
 
   // Events
@@ -1116,7 +1165,10 @@ function openNoteModal(id){
 function closeNoteModal(){document.getElementById('note-modal').classList.remove('open');noteId=null;}
 function confirmNote(){
   const t=document.getElementById('note-inp').value.trim();
-  if(noteId){ if(t) nodes[noteId].note=t; else delete nodes[noteId].note; }
+  if(noteId){
+    if(t){ nodes[noteId].note=t; pinnedPreviewId=noteId; }
+    else delete nodes[noteId].note;
+  }
   closeNoteModal();
   render();
 }
@@ -1164,6 +1216,7 @@ document.getElementById('image-file-input').addEventListener('change',async e=>{
   if(!file||!id||!nodes[id]) return;
   try{
     nodes[id].image=await downscaleImage(file,400,0.7);
+    pinnedPreviewId=id;
     selectNode(id);
     toast('✦ Gambar ditambahkan');
   }catch{
@@ -1334,6 +1387,50 @@ function addChip(text){
   autoPlace(nid); render(); selectNode(nid);
 }
 
+// ── Render markdown sederhana (bold, list) jadi DOM yang aman (tanpa innerHTML) ──
+function renderInlineMd(container,text){
+  const re=/\*\*(.+?)\*\*/g;
+  let last=0;
+  for(const m of text.matchAll(re)){
+    if(m.index>last) container.appendChild(document.createTextNode(text.slice(last,m.index)));
+    const strong=document.createElement('strong');
+    strong.textContent=m[1];
+    container.appendChild(strong);
+    last=m.index+m[0].length;
+  }
+  if(last<text.length) container.appendChild(document.createTextNode(text.slice(last)));
+}
+function renderMarkdown(container,text){
+  const lines=text.split('\n');
+  let i=0;
+  while(i<lines.length){
+    const line=lines[i];
+    if(/^\s*\d+[.)]\s+/.test(line)){
+      const ol=document.createElement('ol');
+      while(i<lines.length && /^\s*\d+[.)]\s+/.test(lines[i])){
+        const li=document.createElement('li');
+        renderInlineMd(li,lines[i].replace(/^\s*\d+[.)]\s+/,''));
+        ol.appendChild(li); i++;
+      }
+      container.appendChild(ol); continue;
+    }
+    if(/^\s*[-•*]\s+/.test(line)){
+      const ul=document.createElement('ul');
+      while(i<lines.length && /^\s*[-•*]\s+/.test(lines[i])){
+        const li=document.createElement('li');
+        renderInlineMd(li,lines[i].replace(/^\s*[-•*]\s+/,''));
+        ul.appendChild(li); i++;
+      }
+      container.appendChild(ul); continue;
+    }
+    if(line.trim()===''){ i++; continue; }
+    const p=document.createElement('p');
+    renderInlineMd(p,line);
+    container.appendChild(p);
+    i++;
+  }
+}
+
 // ── Render histori chat untuk node yang dipilih ─────────────────────────────
 function renderChat(id){
   const cont=document.getElementById('ai-chat');
@@ -1346,7 +1443,8 @@ function renderChat(id){
   chat.forEach(m=>{
     const div=document.createElement('div');
     div.className='chat-msg '+(m.role==='user'?'user':'ai');
-    div.textContent=m.content;
+    if(m.role==='user') div.textContent=m.content;
+    else renderMarkdown(div,m.content);
     cont.appendChild(div);
   });
   cont.scrollTop=cont.scrollHeight;
@@ -1373,7 +1471,8 @@ async function askAI(){
     `Topik utama peta: "${ctx.root}"\n`+
     `Hierarki node: ${ctx.path.join(' → ')}\n`+
     `Node yang sedang dibahas: "${ctx.current}" (level ${ctx.depth})\n`+
-    `Jawab dalam bahasa Indonesia, ringkas (maks 4 kalimat), dan relevan dengan konteks node tersebut.`;
+    `Jawab dalam bahasa Indonesia, ringkas dan relevan dengan konteks node tersebut. ` +
+    `Jika jawaban berisi beberapa hal/langkah, gunakan format poin (list bernomor atau bullet "-") dan **bold** untuk istilah penting.`;
 
   let answer;
   if(!apiKey||aiProv==='demo'){

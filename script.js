@@ -758,12 +758,14 @@ function renderNode(n, layer, w) {
   const addG=svgEl('g');
   addG.setAttribute('class','add-btn');
   addG.setAttribute('transform',`translate(${w-11},${h/2-9})`);
+  const addBg=n.tc==='dark'?TEXT_DARK:TEXT_LIGHT;
+  const addFg=n.tc==='dark'?TEXT_LIGHT:TEXT_DARK;
   const addC=svgEl('circle');
   addC.setAttribute('cx','9'); addC.setAttribute('cy','9'); addC.setAttribute('r','9');
-  addC.setAttribute('fill','rgba(255,252,248,0.22)');
+  addC.setAttribute('fill',addBg);
   const addT=svgEl('text');
   addT.setAttribute('x','9'); addT.setAttribute('y','9');
-  addT.setAttribute('font-size','13'); addT.setAttribute('fill',tc);
+  addT.setAttribute('font-size','13'); addT.setAttribute('fill',addFg);
   addT.setAttribute('dominant-baseline','middle'); addT.setAttribute('text-anchor','middle');
   addT.setAttribute('pointer-events','none'); addT.setAttribute('font-weight','600');
   addT.textContent='+';
@@ -790,6 +792,59 @@ function renderNode(n, layer, w) {
     nl2.setAttribute('stroke',n.ca); nl2.setAttribute('stroke-width','1'); nl2.setAttribute('stroke-linecap','round');
     noteG.appendChild(nl2);
     g.appendChild(noteG);
+  }
+
+  // Image indicator
+  if(n.image){
+    const imgG=svgEl('g');
+    imgG.setAttribute('class','image-badge');
+    imgG.setAttribute('transform',`translate(${n.note?w-24:w-9},9)`);
+    imgG.setAttribute('pointer-events','none');
+    const ib=svgEl('circle');
+    ib.setAttribute('r','5');
+    ib.setAttribute('fill',tc); ib.setAttribute('opacity','0.55');
+    imgG.appendChild(ib);
+    const sun=svgEl('circle');
+    sun.setAttribute('cx','-1.6'); sun.setAttribute('cy','-1.6'); sun.setAttribute('r','0.9');
+    sun.setAttribute('fill',n.ca);
+    imgG.appendChild(sun);
+    const mtn=svgEl('path');
+    mtn.setAttribute('d','M-2.6,2 L-0.5,-1 L0.6,0.6 L1.4,-0.6 L2.6,2 Z');
+    mtn.setAttribute('fill',n.ca);
+    imgG.appendChild(mtn);
+    g.appendChild(imgG);
+  }
+
+  // Preview popup (catatan / gambar) saat node terpilih
+  if(n.id===sel && (n.note||n.image)){
+    const fo=svgEl('foreignObject');
+    fo.setAttribute('class','node-popup-fo');
+    fo.setAttribute('x',(w-180)/2); fo.setAttribute('y',h+10);
+    fo.setAttribute('width','180'); fo.setAttribute('height','260');
+    const NS='http://www.w3.org/1999/xhtml';
+    const box=document.createElementNS(NS,'div');
+    box.setAttribute('class','node-popup');
+    if(n.image){
+      const wrap=document.createElementNS(NS,'div');
+      wrap.setAttribute('class','popup-img-wrap');
+      const img=document.createElementNS(NS,'img');
+      img.setAttribute('class','popup-img');
+      img.setAttribute('src',n.image);
+      const rm=document.createElementNS(NS,'div');
+      rm.setAttribute('class','popup-remove');
+      rm.textContent='✕';
+      rm.addEventListener('click',ev=>{ev.stopPropagation(); delete nodes[n.id].image; selectNode(sel);});
+      wrap.appendChild(img); wrap.appendChild(rm);
+      box.appendChild(wrap);
+    }
+    if(n.note){
+      const p=document.createElementNS(NS,'div');
+      p.setAttribute('class','popup-note');
+      p.textContent=n.note;
+      box.appendChild(p);
+    }
+    fo.appendChild(box);
+    g.appendChild(fo);
   }
 
   // Events
@@ -1045,6 +1100,53 @@ function confirmNote(){
 }
 document.getElementById('note-inp').addEventListener('keydown',e=>{
   if(e.key==='Escape') closeNoteModal();
+});
+
+// ═══════════════════════════════════════════════
+//  UPLOAD GAMBAR
+// ═══════════════════════════════════════════════
+let imageTargetId=null;
+function ctx_image(){
+  hideCtx();
+  imageTargetId=ctxId;
+  document.getElementById('image-file-input').click();
+}
+
+// Kompres & resize gambar di sisi klien sebelum disimpan ke localStorage
+function downscaleImage(file,maxDim,quality){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        let {width,height}=img;
+        if(width>height){ if(width>maxDim){height=Math.round(height*maxDim/width);width=maxDim;} }
+        else if(height>maxDim){ width=Math.round(width*maxDim/height);height=maxDim; }
+        const canvas=document.createElement('canvas');
+        canvas.width=width; canvas.height=height;
+        canvas.getContext('2d').drawImage(img,0,0,width,height);
+        resolve(canvas.toDataURL('image/jpeg',quality));
+      };
+      img.onerror=()=>reject(new Error('Gagal memuat gambar'));
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>reject(new Error('Gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('image-file-input').addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  e.target.value='';
+  const id=imageTargetId; imageTargetId=null;
+  if(!file||!id||!nodes[id]) return;
+  try{
+    nodes[id].image=await downscaleImage(file,400,0.7);
+    selectNode(id);
+    toast('✦ Gambar ditambahkan');
+  }catch{
+    toast('Gagal memuat gambar');
+  }
 });
 
 // ═══════════════════════════════════════════════

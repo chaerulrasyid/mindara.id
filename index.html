@@ -346,6 +346,7 @@
   <div class="ctx-item" onclick="ctx_addChild()">＋ Tambah Cabang</div>
   <div class="ctx-item" onclick="ctx_edit()">✎ Edit Teks</div>
   <div class="ctx-item" onclick="ctx_note()">▤ Catatan</div>
+  <div class="ctx-item" onclick="ctx_image()">🖼 Upload Gambar</div>
   <div class="ctx-item" onclick="ctx_color()">◉ Ganti Warna</div>
   <div class="ctx-sep"></div>
   <div class="ctx-item" onclick="ctx_expand()">✦ Kembangkan dengan AI</div>
@@ -371,6 +372,9 @@
     </div>
   </div>
 </div>
+
+<!-- IMAGE UPLOAD (hidden file input) -->
+<input type="file" id="image-file-input" accept="image/*" style="display:none;">
 
 <!-- NOTE MODAL -->
 <div class="modal-overlay" id="note-modal">

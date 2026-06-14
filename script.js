@@ -656,6 +656,7 @@ function bezier(x1,y1,x2,y2){
 function renderNodes() {
   const layer=document.getElementById('node-layer');
   layer.innerHTML='';
+  document.getElementById('popup-layer').innerHTML='';
   const widths = siblingWidths();
   Object.values(nodes).forEach(n=>renderNode(n,layer,widths[n.id]));
 }
@@ -834,11 +835,12 @@ function renderNode(n, layer, w) {
     g.appendChild(imgG);
   }
 
-  // Preview popup (catatan / gambar) saat node terpilih
+  // Preview popup (catatan / gambar) saat node terpilih — ditaruh di popup-layer
+  // (lapisan terpisah di atas node-layer) agar selalu tampil di depan node lain.
   if(n.id===sel && (n.note||n.image)){
     const fo=svgEl('foreignObject');
     fo.setAttribute('class','node-popup-fo');
-    fo.setAttribute('x',(w-180)/2); fo.setAttribute('y',h+10);
+    fo.setAttribute('x',n.x-90); fo.setAttribute('y',n.y+h/2+10);
     fo.setAttribute('width','180'); fo.setAttribute('height','260');
     const NS='http://www.w3.org/1999/xhtml';
     const box=document.createElementNS(NS,'div');
@@ -849,6 +851,7 @@ function renderNode(n, layer, w) {
       const img=document.createElementNS(NS,'img');
       img.setAttribute('class','popup-img');
       img.setAttribute('src',n.image);
+      img.addEventListener('click',ev=>{ev.stopPropagation(); openLightbox(n.image);});
       const rm=document.createElementNS(NS,'div');
       rm.setAttribute('class','popup-remove');
       rm.textContent='✕';
@@ -863,7 +866,7 @@ function renderNode(n, layer, w) {
       box.appendChild(p);
     }
     fo.appendChild(box);
-    g.appendChild(fo);
+    document.getElementById('popup-layer').appendChild(fo);
   }
 
   // Events
@@ -1040,7 +1043,7 @@ function resetView(){vx=0;vy=0;vs=1;updateVP();}
 
 const wrap=document.getElementById('canvas-wrap');
 wrap.addEventListener('mousedown',e=>{
-  if(e.target.closest('.node-group')) return;
+  if(e.target.closest('.node-group')||e.target.closest('.node-popup-fo')) return;
   panning=true; px0=e.clientX; py0=e.clientY; pvx0=vx; pvy0=vy;
   wrap.classList.add('panning');
   deselect(); hideCtx();
@@ -1167,6 +1170,14 @@ document.getElementById('image-file-input').addEventListener('change',async e=>{
     toast('Gagal memuat gambar');
   }
 });
+
+function openLightbox(src){
+  document.getElementById('img-lightbox-src').setAttribute('src',src);
+  document.getElementById('img-lightbox').classList.add('open');
+}
+function closeLightbox(){
+  document.getElementById('img-lightbox').classList.remove('open');
+}
 
 // ═══════════════════════════════════════════════
 //  COLOR MODAL

@@ -1293,6 +1293,45 @@ function exportMap(){
 // ═══════════════════════════════════════════════
 function togglePanel(){document.getElementById('ai-panel').classList.toggle('hidden');}
 
+// ── Resize panel AI dgn drag handle, lebar disimpan ke localStorage ──
+(function initAiPanelResize(){
+  const AI_PANEL_MIN=260, AI_PANEL_MAX=640;
+  const handle=document.getElementById('ai-resize-handle');
+  const panel=document.getElementById('ai-panel');
+
+  function applyWidth(px){
+    const w=Math.min(AI_PANEL_MAX,Math.max(AI_PANEL_MIN,px));
+    panel.style.width=w+'px';
+    panel.style.minWidth=w+'px';
+    return w;
+  }
+
+  const saved=parseInt(localStorage.getItem('mi_ai_panel_w'),10);
+  if(!isNaN(saved)) applyWidth(saved);
+
+  let dragging=false;
+  handle.addEventListener('mousedown',e=>{
+    dragging=true;
+    handle.classList.add('dragging');
+    panel.classList.add('no-transition');
+    document.body.style.cursor='col-resize';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!dragging) return;
+    const rect=document.getElementById('main').getBoundingClientRect();
+    const w=applyWidth(rect.right-e.clientX);
+    localStorage.setItem('mi_ai_panel_w',w);
+  });
+  window.addEventListener('mouseup',()=>{
+    if(!dragging) return;
+    dragging=false;
+    handle.classList.remove('dragging');
+    panel.classList.remove('no-transition');
+    document.body.style.cursor='';
+  });
+})();
+
 // ── Ambil konteks hierarki node (root → parent → current) ──────────────────
 function getNodeContext(id) {
   const path = [];

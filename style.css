@@ -569,6 +569,25 @@ body {
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
+/* ── AI PANEL RESIZE HANDLE ── */
+#ai-resize-handle {
+  width: 5px; flex-shrink: 0;
+  cursor: col-resize;
+  position: relative;
+  z-index: 10;
+}
+#ai-resize-handle::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: 2px; right: 2px;
+  background: var(--border);
+  transition: background 0.15s;
+}
+#ai-resize-handle:hover::after,
+#ai-resize-handle.dragging::after {
+  background: var(--primary);
+}
+#main:has(#ai-panel.hidden) #ai-resize-handle { display: none; }
+
 /* ── AI PANEL ── */
 #ai-panel {
   width: 296px; min-width: 296px;
@@ -579,6 +598,7 @@ body {
   overflow: hidden;
 }
 #ai-panel.hidden { width: 0; min-width: 0; }
+#ai-panel.no-transition { transition: none; }
 
 .panel-head {
   padding: 13px 16px;

@@ -423,7 +423,12 @@ function scheduleAutosave() {
 
 function _saveToSlot(showToast = true) {
   if (!currentCanvasId) return;
-  localStorage.setItem('mi_canvas_' + currentCanvasId, JSON.stringify({ nodes }));
+  try {
+    localStorage.setItem('mi_canvas_' + currentCanvasId, JSON.stringify({ nodes }));
+  } catch {
+    toast('Penyimpanan penuh — hapus gambar/PDF yang tidak perlu');
+    return;
+  }
   const list = getCanvases();
   const cv   = list.find(c => c.id === currentCanvasId);
   if (cv) { cv.updatedAt = Date.now(); cv.nodeCount = Object.keys(nodes).length; saveCanvasesMeta(list); }
@@ -664,13 +669,13 @@ function renderNodes() {
   refreshPopupLayer();
 }
 
-// Popup catatan/gambar hanya tampil saat badge di-hover atau di-pin (klik)
+// Popup catatan/gambar/pdf hanya tampil saat badge di-hover atau di-pin (klik)
 function refreshPopupLayer(){
   const popupLayer=document.getElementById('popup-layer');
   popupLayer.innerHTML='';
   const id=hoverPreviewId||pinnedPreviewId;
   const n=nodes[id];
-  if(!n||!(n.note||n.image)) return;
+  if(!n||!(n.note||n.image||n.pdf)) return;
   const w=siblingWidths()[n.id];
   const {h}=nodeSize(n.text,n.level);
   popupLayer.appendChild(buildPopupFO(n,w,h));
@@ -767,6 +772,32 @@ function buildPopupFO(n,w,h){
     rm.addEventListener('click',ev=>{ev.stopPropagation(); delete nodes[n.id].image; render();});
     wrap.appendChild(img); wrap.appendChild(rm);
     box.appendChild(wrap);
+  }
+  if(n.pdf){
+    const chip=document.createElementNS(NS,'div');
+    chip.setAttribute('class','popup-pdf');
+    const icon=document.createElementNS(NS,'div');
+    icon.setAttribute('class','popup-pdf-icon');
+    icon.textContent='📄';
+    const info=document.createElementNS(NS,'div');
+    info.setAttribute('class','popup-pdf-info');
+    const name=document.createElementNS(NS,'div');
+    name.setAttribute('class','popup-pdf-name');
+    name.textContent=n.pdf.name||'Dokumen.pdf';
+    const link=document.createElementNS(NS,'a');
+    link.setAttribute('class','popup-link');
+    link.setAttribute('href',n.pdf.url);
+    link.setAttribute('target','_blank');
+    link.setAttribute('rel','noopener noreferrer');
+    link.textContent='Buka PDF ↗';
+    link.addEventListener('click',ev=>ev.stopPropagation());
+    info.appendChild(name); info.appendChild(link);
+    const rm=document.createElementNS(NS,'div');
+    rm.setAttribute('class','popup-pdf-remove');
+    rm.textContent='✕';
+    rm.addEventListener('click',ev=>{ev.stopPropagation(); delete nodes[n.id].pdf; render();});
+    chip.appendChild(icon); chip.appendChild(info); chip.appendChild(rm);
+    box.appendChild(chip);
   }
   if(n.note){
     const p=document.createElementNS(NS,'div');
@@ -916,6 +947,28 @@ function renderNode(n, layer, w) {
     mtn.setAttribute('fill',n.ca);
     imgG.appendChild(mtn);
     g.appendChild(imgG);
+  }
+
+  // PDF indicator — hover/klik utk preview popup
+  if(n.pdf){
+    const pdfG=svgEl('g');
+    pdfG.setAttribute('class','pdf-badge');
+    const taken=(n.note?1:0)+(n.image?1:0);
+    pdfG.setAttribute('transform',`translate(${w-9-taken*15},9)`);
+    attachBadgePreview(pdfG,n.id);
+    const pb=svgEl('circle');
+    pb.setAttribute('r','5');
+    pb.setAttribute('fill',tc); pb.setAttribute('opacity','0.55');
+    pdfG.appendChild(pb);
+    const doc=svgEl('path');
+    doc.setAttribute('d','M-2,-3 L1,-3 L2,-2 L2,3 L-2,3 Z');
+    doc.setAttribute('fill',n.ca);
+    pdfG.appendChild(doc);
+    const fold=svgEl('path');
+    fold.setAttribute('d','M1,-3 L1,-2 L2,-2 Z');
+    fold.setAttribute('fill',tc); fold.setAttribute('opacity','0.55');
+    pdfG.appendChild(fold);
+    g.appendChild(pdfG);
   }
 
   // Events
@@ -1221,6 +1274,45 @@ document.getElementById('image-file-input').addEventListener('change',async e=>{
     toast('✦ Gambar ditambahkan');
   }catch{
     toast('Gagal memuat gambar');
+  }
+});
+
+// ═══════════════════════════════════════════════
+//  UPLOAD PDF
+// ═══════════════════════════════════════════════
+const PDF_MAX_BYTES=5*1024*1024; // 5MB, batas aman utk localStorage
+let pdfTargetId=null;
+function ctx_pdf(){
+  hideCtx();
+  pdfTargetId=ctxId;
+  document.getElementById('pdf-file-input').click();
+}
+
+function readFileAsDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>resolve(e.target.result);
+    reader.onerror=()=>reject(new Error('Gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('pdf-file-input').addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  e.target.value='';
+  const id=pdfTargetId; pdfTargetId=null;
+  if(!file||!id||!nodes[id]) return;
+  if(file.size>PDF_MAX_BYTES){
+    toast('PDF terlalu besar (maks 5MB)');
+    return;
+  }
+  try{
+    nodes[id].pdf={url:await readFileAsDataURL(file),name:file.name};
+    pinnedPreviewId=id;
+    selectNode(id);
+    toast('✦ PDF ditambahkan');
+  }catch{
+    toast('Gagal memuat PDF');
   }
 });
 

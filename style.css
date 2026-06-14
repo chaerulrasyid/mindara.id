@@ -552,6 +552,35 @@ body {
   word-break: break-all;
   cursor: pointer;
 }
+.popup-pdf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+}
+.popup-pdf-icon { font-size: 18px; line-height: 1; flex-shrink: 0; }
+.popup-pdf-info { flex: 1; min-width: 0; }
+.popup-pdf-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.popup-pdf .popup-link { font-size: 11px; word-break: normal; }
+.popup-pdf-remove {
+  flex-shrink: 0;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(0,0,0,0.12); color: var(--text-faint);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1; cursor: pointer;
+  pointer-events: auto;
+}
 
 /* ── IMAGE LIGHTBOX (preview gambar ukuran penuh) ── */
 .img-lightbox {

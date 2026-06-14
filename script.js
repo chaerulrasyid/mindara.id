@@ -590,9 +590,30 @@ function checkEmpty() {
 // ═══════════════════════════════════════════════
 //  AUTO LAYOUT
 // ═══════════════════════════════════════════════
+// Tentukan arah (kanan=1 / kiri=-1) tempat anak-anak `node` diletakkan,
+// mengikuti sisi tempat `node` sendiri berada relatif ke root.
+function branchDirection(node, excludeId) {
+  const root = Object.values(nodes).find(x => !x.parentId);
+  if (node.id === root.id) {
+    if (layoutMode === 'left')  return -1;
+    if (layoutMode === 'right') return 1;
+    const ch = childrenOf(root.id).filter(c => c.id !== excludeId);
+    const rightCount = ch.filter(c => c.x >= root.x).length;
+    const leftCount  = ch.length - rightCount;
+    return leftCount < rightCount ? -1 : 1;
+  }
+  return node.x >= root.x ? 1 : -1;
+}
+
 function autoPlace(id) {
-  // Setelah tambah node manual, re-layout seluruh tree
-  layoutAll();
+  // Re-layout hanya cabang yang terkait, agar posisi node lain
+  // (yang sudah digeser manual) tidak ikut berubah.
+  const n = nodes[id];
+  const parent = n.parentId ? nodes[n.parentId] : null;
+  if (!parent) return;
+
+  const dir = branchDirection(parent, id);
+  placeChildren(parent, childrenOf(parent.id), dir, siblingWidths());
 }
 
 // ═══════════════════════════════════════════════
@@ -871,11 +892,12 @@ function onDragUp(){
   dropTargetId=null;
   if(targetId && dragId){
     reparentNode(dragId, targetId);
-    layoutAll();
+    const dir=branchDirection(nodes[targetId], dragId);
+    placeChildren(nodes[targetId], childrenOf(targetId), dir, siblingWidths());
     toast('✦ Cabang dipindahkan');
   }
   dragId=null;
-  render();
+  if(didDrag) render();
   setTimeout(()=>{didDrag=false;},50);
 }
 
